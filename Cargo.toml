@@ -2,6 +2,13 @@
 name = "moonshine-tag"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "Cheap, fast, mostly unique identifiers designed for Bevy"
+categories = ["game-development"]
+keywords = ["bevy"]
+readme = "README.md"
+homepage = "https://github.com/Zeenobit/moonshine_tag"
+repository = "https://github.com/Zeenobit/moonshine_tag"
 
 [dependencies]
 once_cell = "1.19.*"
