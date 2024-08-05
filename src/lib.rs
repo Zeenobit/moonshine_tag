@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod prelude {
     pub use crate::{
-        tags, Filter as TagFilter, FilterAnd, FilterOr, GetEntityTags, GetTags, IntoTags, Tag,
+        tags, GetEntityTags, GetTags, IntoTags, Tag, TagFilter, TagFilterAnd, TagFilterOr,
         TagPlugin, Tags,
     };
 }
@@ -32,10 +32,10 @@ impl Plugin for TagPlugin {
             .register_type::<HashSet<Tag>>()
             .register_type_data::<HashSet<Tag>, ReflectSerialize>()
             .register_type_data::<HashSet<Tag>, ReflectDeserialize>()
-            .register_type::<Filter>()
-            .register_type::<Box<Filter>>()
-            .register_type_data::<Box<Filter>, ReflectSerialize>()
-            .register_type_data::<Box<Filter>, ReflectDeserialize>();
+            .register_type::<TagFilter>()
+            .register_type::<Box<TagFilter>>()
+            .register_type_data::<Box<TagFilter>, ReflectSerialize>()
+            .register_type_data::<Box<TagFilter>, ReflectDeserialize>();
     }
 }
 
@@ -123,19 +123,19 @@ impl FromWorld for Tag {
     }
 }
 
-impl<T: Into<Filter>> BitOr<T> for Tag {
-    type Output = Filter;
+impl<T: Into<TagFilter>> BitOr<T> for Tag {
+    type Output = TagFilter;
 
     fn bitor(self, rhs: T) -> Self::Output {
-        Filter::Eq(self.into()) | rhs
+        TagFilter::Eq(self.into()) | rhs
     }
 }
 
 impl Not for Tag {
-    type Output = Filter;
+    type Output = TagFilter;
 
     fn not(self) -> Self::Output {
-        !Filter::Eq(self.into())
+        !TagFilter::Eq(self.into())
     }
 }
 
@@ -356,7 +356,7 @@ impl IntoTags for Tags {
 /// assert!(c_or_ab.allows(&c));
 /// ```
 #[derive(Clone, Serialize, Deserialize, Reflect)]
-pub enum Filter {
+pub enum TagFilter {
     /// Matches no tags.
     None,
     /// Matches any set of tags.
@@ -368,17 +368,17 @@ pub enum Filter {
     /// Matches any set of tags which contains any of the filter tags.
     Some(Tags),
     /// Matches any set of tags which matches both inner filters.
-    And(FilterDyn, FilterDyn),
+    And(TagFilterDyn, TagFilterDyn),
     /// Matches any set of tags which matches either inner filters.
-    Or(FilterDyn, FilterDyn),
+    Or(TagFilterDyn, TagFilterDyn),
     /// Matches any set of tags which does not match the inner filter.
-    Not(FilterDyn),
+    Not(TagFilterDyn),
 }
 
-impl Filter {
+impl TagFilter {
     /// Returns `true` if this filter allows the given set of tags.
     pub fn allows(&self, tags: &Tags) -> bool {
-        use Filter::*;
+        use TagFilter::*;
         match self {
             None => false,
             Any => true,
@@ -392,19 +392,19 @@ impl Filter {
     }
 }
 
-impl Default for Filter {
+impl Default for TagFilter {
     fn default() -> Self {
         Self::Any
     }
 }
 
-impl<T: IntoTags> From<T> for Filter {
+impl<T: IntoTags> From<T> for TagFilter {
     fn from(tags: T) -> Self {
         Self::Eq(tags.into_tags())
     }
 }
 
-impl<T: Into<Filter>> BitAnd<T> for Filter {
+impl<T: Into<TagFilter>> BitAnd<T> for TagFilter {
     type Output = Self;
 
     fn bitand(self, rhs: T) -> Self::Output {
@@ -412,7 +412,7 @@ impl<T: Into<Filter>> BitAnd<T> for Filter {
     }
 }
 
-impl<T: Into<Filter>> BitOr<T> for Filter {
+impl<T: Into<TagFilter>> BitOr<T> for TagFilter {
     type Output = Self;
 
     fn bitor(self, rhs: T) -> Self::Output {
@@ -420,17 +420,17 @@ impl<T: Into<Filter>> BitOr<T> for Filter {
     }
 }
 
-impl Not for Filter {
-    type Output = Filter;
+impl Not for TagFilter {
+    type Output = TagFilter;
 
     fn not(self) -> Self::Output {
         Self::Not(Box::new(self))
     }
 }
 
-type FilterDyn = Box<Filter>;
+type TagFilterDyn = Box<TagFilter>;
 
-impl Reflect for Box<Filter> {
+impl Reflect for Box<TagFilter> {
     fn into_any(self: Box<Self>) -> Box<dyn Any> {
         (*self).into_any()
     }
@@ -488,76 +488,76 @@ impl Reflect for Box<Filter> {
     }
 }
 
-impl FromReflect for Box<Filter> {
+impl FromReflect for Box<TagFilter> {
     fn from_reflect(reflect: &dyn Reflect) -> Option<Self> {
-        Filter::from_reflect(reflect).map(Box::new)
+        TagFilter::from_reflect(reflect).map(Box::new)
     }
 }
 
-impl TypePath for Box<Filter> {
+impl TypePath for Box<TagFilter> {
     fn type_path() -> &'static str {
-        Filter::type_path()
+        TagFilter::type_path()
     }
 
     fn short_type_path() -> &'static str {
-        Filter::short_type_path()
+        TagFilter::short_type_path()
     }
 }
 
-impl Typed for Box<Filter> {
+impl Typed for Box<TagFilter> {
     fn type_info() -> &'static TypeInfo {
         static CELL: NonGenericTypeInfoCell = NonGenericTypeInfoCell::new();
         CELL.get_or_set(|| TypeInfo::Value(ValueInfo::new::<Self>()))
     }
 }
 
-impl GetTypeRegistration for Box<Filter> {
+impl GetTypeRegistration for Box<TagFilter> {
     fn get_type_registration() -> TypeRegistration {
         TypeRegistration::of::<Self>()
     }
 }
 
-pub fn none() -> Filter {
-    Filter::Eq(().into_tags())
+pub fn none() -> TagFilter {
+    TagFilter::Eq(().into_tags())
 }
 
-pub fn any() -> Filter {
-    Filter::Any
+pub fn any() -> TagFilter {
+    TagFilter::Any
 }
 
-pub fn all(all: impl IntoTags) -> Filter {
-    Filter::All(all.into_tags())
+pub fn all(all: impl IntoTags) -> TagFilter {
+    TagFilter::All(all.into_tags())
 }
 
-pub fn some(some: impl IntoTags) -> Filter {
-    Filter::Some(some.into_tags())
+pub fn some(some: impl IntoTags) -> TagFilter {
+    TagFilter::Some(some.into_tags())
 }
 
-pub fn not(not: impl Into<Filter>) -> Filter {
+pub fn not(not: impl Into<TagFilter>) -> TagFilter {
     !not.into()
 }
 
-pub trait FilterOr {
-    fn or(self, other: impl Into<Filter>) -> Filter;
+pub trait TagFilterOr {
+    fn or(self, other: impl Into<TagFilter>) -> TagFilter;
 }
 
-impl<T: Into<Filter>> FilterOr for T {
-    fn or(self, other: impl Into<Filter>) -> Filter {
+impl<T: Into<TagFilter>> TagFilterOr for T {
+    fn or(self, other: impl Into<TagFilter>) -> TagFilter {
         self.into() | other.into()
     }
 }
 
-pub trait FilterAnd {
-    fn and(self, other: impl Into<Filter>) -> Filter;
+pub trait TagFilterAnd {
+    fn and(self, other: impl Into<TagFilter>) -> TagFilter;
 }
 
-impl<T: Into<Filter>> FilterAnd for T {
-    fn and(self, other: impl Into<Filter>) -> Filter {
+impl<T: Into<TagFilter>> TagFilterAnd for T {
+    fn and(self, other: impl Into<TagFilter>) -> TagFilter {
         self.into() & other.into()
     }
 }
 
-pub fn matches(tags: impl IntoTags, filter: impl Into<Filter>) -> bool {
+pub fn matches(tags: impl IntoTags, filter: impl Into<TagFilter>) -> bool {
     filter.into().allows(&tags.into_tags())
 }
 
@@ -584,7 +584,7 @@ mod tests {
         assert!(matches((), any() & ()));
         assert!(matches((), any() & none()));
 
-        assert!(!matches((), !Filter::from(())));
+        assert!(!matches((), !TagFilter::from(())));
         assert!(!matches((), !any()));
         assert!(!matches((), !none()));
         assert!(!matches((), A));
