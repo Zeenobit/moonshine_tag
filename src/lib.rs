@@ -589,6 +589,8 @@ mod tests {
         assert!(!matches((), !none()));
         assert!(!matches((), A));
         assert!(!matches((), [A, B]));
+        assert!(!matches((), some(A)));
+        assert!(!matches((), some([A, B])));
     }
 
     #[test]
@@ -600,12 +602,16 @@ mod tests {
         assert!(matches(A, !none()));
         assert!(matches(A, !B));
         assert!(matches(A, !C));
+        assert!(matches(A, some(A)));
+        assert!(matches(A, some([A, B])));
+        assert!(matches(B, some([A, B])));
 
         assert!(!matches(A, B));
         assert!(!matches(A, none()));
         assert!(!matches(A, B | C));
         assert!(!matches(A, !A));
         assert!(!matches(A, [A, B]));
+        assert!(!matches(A, some([B, C])));
     }
 
     #[test]
@@ -618,11 +624,13 @@ mod tests {
         assert!(matches([A, B], !A));
         assert!(matches([A, B], !C));
         assert!(matches([A, B], not([B, C])));
+        assert!(matches([A, B], some([A, B])));
 
         assert!(!matches([A, B], [A, C]));
         assert!(!matches([A, B], none()));
         assert!(!matches([A, B], [A, C].or([B, C])));
         assert!(!matches([A, B], A));
         assert!(!matches([A, B], [A, B, C]));
+        assert!(!matches([A, B], some(C)));
     }
 }
