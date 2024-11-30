@@ -8,8 +8,8 @@ use std::{
 use bevy_app::{App, Plugin};
 use bevy_ecs::prelude::*;
 use bevy_reflect::{
-    prelude::*, utility::NonGenericTypeInfoCell, ApplyError, GetTypeRegistration, ReflectMut,
-    ReflectOwned, ReflectRef, TypeInfo, TypePath, TypeRegistration, Typed, ValueInfo,
+    prelude::*, utility::NonGenericTypeInfoCell, ApplyError, GetTypeRegistration, OpaqueInfo,
+    ReflectMut, ReflectOwned, ReflectRef, TypeInfo, TypePath, TypeRegistration, Typed,
 };
 use bevy_utils::HashSet;
 use once_cell::sync::Lazy;
@@ -430,6 +430,56 @@ impl Not for TagFilter {
 
 type TagFilterDyn = Box<TagFilter>;
 
+impl PartialReflect for Box<TagFilter> {
+    fn get_represented_type_info(&self) -> Option<&'static TypeInfo> {
+        (**self).get_represented_type_info()
+    }
+
+    fn into_partial_reflect(self: Box<Self>) -> Box<dyn PartialReflect> {
+        (*self).into_partial_reflect()
+    }
+
+    fn as_partial_reflect(&self) -> &dyn PartialReflect {
+        (**self).as_partial_reflect()
+    }
+
+    fn as_partial_reflect_mut(&mut self) -> &mut dyn PartialReflect {
+        (**self).as_partial_reflect_mut()
+    }
+
+    fn try_into_reflect(self: Box<Self>) -> Result<Box<dyn Reflect>, Box<dyn PartialReflect>> {
+        (*self).try_into_reflect()
+    }
+
+    fn try_as_reflect(&self) -> Option<&dyn Reflect> {
+        (**self).try_as_reflect()
+    }
+
+    fn try_as_reflect_mut(&mut self) -> Option<&mut dyn Reflect> {
+        (**self).try_as_reflect_mut()
+    }
+
+    fn try_apply(&mut self, value: &dyn PartialReflect) -> Result<(), ApplyError> {
+        (**self).try_apply(value)
+    }
+
+    fn reflect_ref(&self) -> ReflectRef {
+        (**self).reflect_ref()
+    }
+
+    fn reflect_mut(&mut self) -> ReflectMut {
+        (**self).reflect_mut()
+    }
+
+    fn reflect_owned(self: Box<Self>) -> ReflectOwned {
+        (*self).reflect_owned()
+    }
+
+    fn clone_value(&self) -> Box<dyn PartialReflect> {
+        (**self).clone_value()
+    }
+}
+
 impl Reflect for Box<TagFilter> {
     fn into_any(self: Box<Self>) -> Box<dyn Any> {
         (*self).into_any()
@@ -455,41 +505,13 @@ impl Reflect for Box<TagFilter> {
         (**self).as_reflect_mut()
     }
 
-    fn apply(&mut self, value: &dyn Reflect) {
-        (**self).apply(value)
-    }
-
-    fn try_apply(&mut self, value: &dyn Reflect) -> Result<(), ApplyError> {
-        (**self).try_apply(value)
-    }
-
     fn set(&mut self, value: Box<dyn Reflect>) -> Result<(), Box<dyn Reflect>> {
         (**self).set(value)
-    }
-
-    fn reflect_ref(&self) -> ReflectRef {
-        (**self).reflect_ref()
-    }
-
-    fn reflect_mut(&mut self) -> ReflectMut {
-        (**self).reflect_mut()
-    }
-
-    fn reflect_owned(self: Box<Self>) -> ReflectOwned {
-        (*self).reflect_owned()
-    }
-
-    fn clone_value(&self) -> Box<dyn Reflect> {
-        (**self).clone_value()
-    }
-
-    fn get_represented_type_info(&self) -> Option<&'static TypeInfo> {
-        (**self).get_represented_type_info()
     }
 }
 
 impl FromReflect for Box<TagFilter> {
-    fn from_reflect(reflect: &dyn Reflect) -> Option<Self> {
+    fn from_reflect(reflect: &dyn PartialReflect) -> Option<Self> {
         TagFilter::from_reflect(reflect).map(Box::new)
     }
 }
@@ -507,7 +529,7 @@ impl TypePath for Box<TagFilter> {
 impl Typed for Box<TagFilter> {
     fn type_info() -> &'static TypeInfo {
         static CELL: NonGenericTypeInfoCell = NonGenericTypeInfoCell::new();
-        CELL.get_or_set(|| TypeInfo::Value(ValueInfo::new::<Self>()))
+        CELL.get_or_set(|| TypeInfo::Opaque(OpaqueInfo::new::<Self>()))
     }
 }
 
