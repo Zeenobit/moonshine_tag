@@ -294,6 +294,25 @@ impl GetEntityTags for EntityWorldMut<'_> {
 }
 
 /// A global empty set of tags.
+///
+/// # Usage
+///
+/// This is convenient for cases when the absence of `Tags` implies "no tags", for example:
+///
+/// ```
+/// use bevy::prelude::*;
+/// use moonshine_tag::{prelude::*, EMPTY_TAGS};
+///
+/// let mut world = World::new();
+///
+/// // Spawn an entity with no tags:
+/// let entity = world.spawn_empty().id();
+///
+/// // Get tags, or just use the global empty set.
+/// let tags: &Tags = world.get::<Tags>(entity).unwrap_or(&EMPTY_TAGS);
+///
+/// assert!(tags.is_empty());
+/// ```
 pub static EMPTY_TAGS: Lazy<Tags> = Lazy::new(Tags::new);
 
 pub trait IntoTags {
