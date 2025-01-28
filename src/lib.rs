@@ -175,6 +175,10 @@ impl Tags {
         Self::default()
     }
 
+    pub fn from_iter(iter: impl Iterator<Item = Tag>) -> Self {
+        Self(HashSet::from_iter(iter))
+    }
+
     /// Returns the number of tags in this set.
     pub fn len(&self) -> usize {
         self.0.len()
@@ -233,6 +237,12 @@ impl From<Tag> for Tags {
         let mut tags = Tags::new();
         tags.insert(tag);
         tags
+    }
+}
+
+impl<const N: usize> From<[Tag; N]> for Tags {
+    fn from(tags: [Tag; N]) -> Self {
+        Tags::from_iter(tags.into_iter())
     }
 }
 
