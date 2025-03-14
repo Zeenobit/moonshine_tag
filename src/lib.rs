@@ -123,6 +123,14 @@ impl FromWorld for Tag {
     }
 }
 
+impl<T: Into<TagFilter>> BitAnd<T> for Tag {
+    type Output = TagFilter;
+
+    fn bitand(self, rhs: T) -> Self::Output {
+        TagFilter::Eq(self.into()) & rhs
+    }
+}
+
 impl<T: Into<TagFilter>> BitOr<T> for Tag {
     type Output = TagFilter;
 
