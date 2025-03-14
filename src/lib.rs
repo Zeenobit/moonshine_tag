@@ -170,6 +170,31 @@ impl Not for Tag {
 pub struct Tags(HashSet<Tag>);
 
 impl Tags {
+    /// A static empty set of tags.
+    ///
+    /// # Usage
+    ///
+    /// This is convenient for cases when the absence of `Tags` implies "no tags", for example:
+    ///
+    /// ```
+    /// use bevy::prelude::*;
+    /// use moonshine_tag::{prelude::*, EMPTY_TAGS};
+    ///
+    /// let mut world = World::new();
+    ///
+    /// // Spawn an entity with no tags:
+    /// let entity = world.spawn_empty().id();
+    ///
+    /// // Get tags, or just use the global empty set.
+    /// let tags: &Tags = world.get::<Tags>(entity).unwrap_or(Tags::none());
+    ///
+    /// assert!(tags.is_empty());
+    /// ```
+    pub fn none() -> &'static Tags {
+        static EMPTY_TAGS: Lazy<Tags> = Lazy::new(Tags::new);
+        &EMPTY_TAGS
+    }
+
     /// Creates a new empty set of tags.
     pub fn new() -> Self {
         Self::default()
@@ -275,7 +300,7 @@ pub trait GetTags {
 
 impl GetTags for World {
     fn tags(&self, entity: Entity) -> &Tags {
-        self.get(entity).unwrap_or(&EMPTY_TAGS)
+        self.get(entity).unwrap_or(Tags::none())
     }
 }
 
@@ -287,43 +312,21 @@ pub trait GetEntityTags {
 
 impl GetEntityTags for EntityRef<'_> {
     fn tags(&self) -> &Tags {
-        self.get().unwrap_or(&EMPTY_TAGS)
+        self.get().unwrap_or(Tags::none())
     }
 }
 
 impl GetEntityTags for EntityMut<'_> {
     fn tags(&self) -> &Tags {
-        self.get().unwrap_or(&EMPTY_TAGS)
+        self.get().unwrap_or(Tags::none())
     }
 }
 
 impl GetEntityTags for EntityWorldMut<'_> {
     fn tags(&self) -> &Tags {
-        self.get().unwrap_or(&EMPTY_TAGS)
+        self.get().unwrap_or(Tags::none())
     }
 }
-
-/// A global empty set of tags.
-///
-/// # Usage
-///
-/// This is convenient for cases when the absence of `Tags` implies "no tags", for example:
-///
-/// ```
-/// use bevy::prelude::*;
-/// use moonshine_tag::{prelude::*, EMPTY_TAGS};
-///
-/// let mut world = World::new();
-///
-/// // Spawn an entity with no tags:
-/// let entity = world.spawn_empty().id();
-///
-/// // Get tags, or just use the global empty set.
-/// let tags: &Tags = world.get::<Tags>(entity).unwrap_or(&EMPTY_TAGS);
-///
-/// assert!(tags.is_empty());
-/// ```
-pub static EMPTY_TAGS: Lazy<Tags> = Lazy::new(Tags::new);
 
 pub trait IntoTags {
     fn into_tags(self) -> Tags;
