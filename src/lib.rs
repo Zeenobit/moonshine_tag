@@ -6,7 +6,7 @@ use std::{
 };
 
 use bevy_app::{App, Plugin};
-use bevy_ecs::prelude::*;
+use bevy_ecs::{component::ComponentId, prelude::*, world::DeferredWorld};
 use bevy_reflect::{
     prelude::*, utility::NonGenericTypeInfoCell, ApplyError, GetTypeRegistration, OpaqueInfo,
     ReflectMut, ReflectOwned, ReflectRef, TypeInfo, TypePath, TypeRegistration, Typed,
@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 pub mod prelude {
     pub use crate::{
         tags, GetEntityTags, GetTags, IntoTags, Tag, TagFilter, TagFilterAnd, TagFilterOr,
-        TagPlugin, Tags,
+        TagPlugin, Tags, WithTags,
     };
 }
 
@@ -237,8 +237,12 @@ impl Tags {
     /// Returns the union of this and another set of tags.
     #[must_use]
     pub fn union(mut self, other: impl IntoTags) -> Self {
-        self.0.extend(other.into_tags());
+        self.extend(other.into_tags());
         self
+    }
+
+    pub fn extend(&mut self, other: impl IntoTags) {
+        self.0.extend(other.into_tags());
     }
 
     /// Returns `true` if this set has no tags in common with another set.
@@ -277,6 +281,12 @@ impl<const N: usize> PartialEq<[Tag; N]> for Tags {
     }
 }
 
+impl<const N: usize> PartialEq<[Tag; N]> for &Tags {
+    fn eq(&self, other: &[Tag; N]) -> bool {
+        self.0.len() == N && other.iter().all(|tag| self.0.contains(tag))
+    }
+}
+
 impl<const N: usize> PartialEq<Tags> for [Tag; N] {
     fn eq(&self, other: &Tags) -> bool {
         other == self
@@ -289,6 +299,55 @@ impl IntoIterator for Tags {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+/// A [`Component`] which merges a set of tags into single [`Tags`] component.
+///
+/// # Usage
+///
+/// This is useful for adding tags to entities which may or may not have a `Tags` component
+/// already without replacing the existing tags, especially when spawning bundles.
+///
+/// # Examples
+/// ```
+/// # use bevy::prelude::*;
+/// # use moonshine_tag::prelude::*;
+///
+/// tags! { A, B, C };
+///
+/// let mut world = World::new();
+/// let entity = world.spawn((WithTags(|| [A, B]), WithTags(|| [B, C]))).id();
+/// world.flush();
+/// assert_eq!(world.tags(entity), [A, B, C]);
+/// ```
+#[derive(Component)]
+#[component(storage = "SparseSet")]
+#[component(on_add = Self::on_add)]
+pub struct WithTags<I: IntoIterator<Item = Tag>, F: FnOnce() -> I>(pub F)
+where
+    F: 'static + Send + Sync,
+    I: 'static + Send + Sync;
+
+impl<I: IntoIterator<Item = Tag>, F: FnOnce() -> I> WithTags<I, F>
+where
+    F: 'static + Send + Sync,
+    I: 'static + Send + Sync,
+{
+    fn on_add(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
+        world
+            .commands()
+            .entity(entity)
+            .queue(|entity: Entity, world: &mut World| {
+                let mut entity = world.entity_mut(entity);
+                let this = entity.take::<Self>().unwrap();
+                let new_tags = Tags::from_iter(this.0().into_iter());
+                if let Some(mut tags) = entity.get_mut::<Tags>() {
+                    tags.extend(new_tags);
+                } else {
+                    entity.insert(new_tags);
+                }
+            });
     }
 }
 
@@ -686,5 +745,25 @@ mod tests {
         assert!(!matches([A, B], A));
         assert!(!matches([A, B], [A, B, C]));
         assert!(!matches([A, B], some(C)));
+    }
+
+    #[test]
+    fn with_tags() {
+        let mut world = World::new();
+        let entity = world
+            .spawn((WithTags(|| [A]), WithTags(|| [A, B]), WithTags(|| [B, C])))
+            .id();
+        world.flush();
+        assert_eq!(world.tags(entity), [A, B, C]);
+    }
+
+    #[test]
+    fn with_tags_existing() {
+        let mut world = World::new();
+        let entity = world
+            .spawn((A.into_tags(), WithTags(|| [A, B]), WithTags(|| [B, C])))
+            .id();
+        world.flush();
+        assert_eq!(world.tags(entity), [A, B, C]);
     }
 }
