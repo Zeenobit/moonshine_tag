@@ -482,8 +482,8 @@ impl TagFilter {
             None => false,
             Any => true,
             Eq(a) => a == tags,
-            All(a) => tags.is_subset(a),
-            Some(a) => !tags.is_disjoint(a),
+            All(a) => a.is_subset(tags),
+            Some(a) => !a.is_disjoint(tags),
             And(a, b) => a.allows(tags) && b.allows(tags),
             Or(a, b) => a.allows(tags) || b.allows(tags),
             Not(a) => !a.allows(tags),
@@ -718,6 +718,7 @@ mod tests {
     fn match_tag() {
         assert!(matches(A, A));
         assert!(matches(A, any()));
+        assert!(matches(A, all(A)));
         assert!(matches(A, A | B));
         assert!(matches(A, B | A));
         assert!(matches(A, !none()));
@@ -729,6 +730,8 @@ mod tests {
 
         assert!(!matches(A, B));
         assert!(!matches(A, none()));
+        assert!(!matches(A, all(B)));
+        assert!(!matches(A, all([A, B])));
         assert!(!matches(A, B | C));
         assert!(!matches(A, !A));
         assert!(!matches(A, [A, B]));
@@ -740,6 +743,8 @@ mod tests {
         assert!(matches([A, B], [A, B]));
         assert!(matches([A, B], [B, A]));
         assert!(matches([A, B], any()));
+        assert!(matches([A, B], all([A])));
+        assert!(matches([A, B], all([A, B])));
         assert!(matches([A, B], [A, B].or([B, C])));
         assert!(matches([A, B], !none()));
         assert!(matches([A, B], !A));
@@ -749,6 +754,8 @@ mod tests {
 
         assert!(!matches([A, B], [A, C]));
         assert!(!matches([A, B], none()));
+        assert!(!matches([A, B], all([A, C])));
+        assert!(!matches([A, B], all([A, B, C])));
         assert!(!matches([A, B], [A, C].or([B, C])));
         assert!(!matches([A, B], A));
         assert!(!matches([A, B], [A, B, C]));
