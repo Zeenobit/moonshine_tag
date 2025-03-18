@@ -319,6 +319,30 @@ impl IntoIterator for Tags {
     }
 }
 
+impl<T: Into<TagFilter>> BitAnd<T> for Tags {
+    type Output = TagFilter;
+
+    fn bitand(self, rhs: T) -> Self::Output {
+        TagFilter::from(self) & rhs
+    }
+}
+
+impl<T: Into<TagFilter>> BitOr<T> for Tags {
+    type Output = TagFilter;
+
+    fn bitor(self, rhs: T) -> Self::Output {
+        TagFilter::from(self) | rhs
+    }
+}
+
+impl Not for Tags {
+    type Output = TagFilter;
+
+    fn not(self) -> Self::Output {
+        !TagFilter::from(self)
+    }
+}
+
 /// A [`Component`] which merges a set of tags into single [`Tags`] component.
 ///
 /// # Usage
@@ -514,6 +538,7 @@ mod tests {
         assert!(!matches([A, B], TagFilter::all_of([A, B, C])));
         assert!(!matches([A, B], TagFilter::all_of([A, C]) | [B, C]));
         assert!(!matches([A, B], A));
+        assert!(!matches([A, B], !TagFilter::from([A, B])));
         assert!(!matches([A, B], [A, B, C]));
         assert!(!matches([A, B], TagFilter::any_of(C)));
     }
