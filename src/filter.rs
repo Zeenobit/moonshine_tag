@@ -42,8 +42,6 @@ use crate::{IntoTags, Tags};
 /// ```
 #[derive(Clone, Serialize, Deserialize, Reflect)]
 pub enum TagFilter {
-    /// Matches no tags.
-    None,
     /// Matches any set of tags which is exactly equal to the filter tags.
     Equal(Tags),
     /// Matches any set of tags which contains all of the filter tags.
@@ -60,26 +58,29 @@ pub enum TagFilter {
 
 impl TagFilter {
     pub fn none() -> TagFilter {
-        TagFilter::Equal(().into_tags())
+        Self::Equal(().into_tags())
+    }
+
+    pub fn equal(tags: impl IntoTags) -> TagFilter {
+        Self::Equal(tags.into_tags())
     }
 
     pub fn any() -> TagFilter {
-        TagFilter::AllOf(().into_tags())
+        Self::AllOf(().into_tags())
     }
 
     pub fn all_of(tags: impl IntoTags) -> TagFilter {
-        TagFilter::AllOf(tags.into_tags())
+        Self::AllOf(tags.into_tags())
     }
 
     pub fn any_of(tags: impl IntoTags) -> TagFilter {
-        TagFilter::AnyOf(tags.into_tags())
+        Self::AnyOf(tags.into_tags())
     }
 
     /// Returns `true` if this filter allows the given set of tags.
     pub fn allows(&self, tags: &Tags) -> bool {
         use TagFilter::*;
         match self {
-            None => false,
             Equal(a) => a == tags,
             AllOf(a) => a.is_subset(tags),
             AnyOf(a) => !a.is_disjoint(tags),
