@@ -126,7 +126,7 @@ impl<T: Into<TagFilter>> BitAnd<T> for Tag {
     type Output = TagFilter;
 
     fn bitand(self, rhs: T) -> Self::Output {
-        TagFilter::Eq(self.into()) & rhs
+        TagFilter::Equal(self.into()) & rhs
     }
 }
 
@@ -134,7 +134,7 @@ impl<T: Into<TagFilter>> BitOr<T> for Tag {
     type Output = TagFilter;
 
     fn bitor(self, rhs: T) -> Self::Output {
-        TagFilter::Eq(self.into()) | rhs
+        TagFilter::Equal(self.into()) | rhs
     }
 }
 
@@ -142,7 +142,7 @@ impl Not for Tag {
     type Output = TagFilter;
 
     fn not(self) -> Self::Output {
-        !TagFilter::Eq(self.into())
+        !TagFilter::Equal(self.into())
     }
 }
 
@@ -454,7 +454,7 @@ mod tests {
     fn match_empty() {
         assert!(matches((), ()));
         assert!(matches((), TagFilter::any()));
-        assert!(matches((), TagFilter::all(())));
+        assert!(matches((), TagFilter::all_of(())));
         assert!(matches((), TagFilter::none()));
         assert!(matches((), TagFilter::any() | ()));
         assert!(matches((), TagFilter::any() | TagFilter::none()));
@@ -466,32 +466,32 @@ mod tests {
         assert!(!matches((), !TagFilter::none()));
         assert!(!matches((), A));
         assert!(!matches((), [A, B]));
-        assert!(!matches((), TagFilter::some(A)));
-        assert!(!matches((), TagFilter::some([A, B])));
+        assert!(!matches((), TagFilter::any_of(A)));
+        assert!(!matches((), TagFilter::any_of([A, B])));
     }
 
     #[test]
     fn match_tag() {
         assert!(matches(A, A));
         assert!(matches(A, TagFilter::any()));
-        assert!(matches(A, TagFilter::all(A)));
+        assert!(matches(A, TagFilter::all_of(A)));
         assert!(matches(A, A | B));
         assert!(matches(A, B | A));
         assert!(matches(A, !TagFilter::none()));
         assert!(matches(A, !B));
         assert!(matches(A, !C));
-        assert!(matches(A, TagFilter::some(A)));
-        assert!(matches(A, TagFilter::some([A, B])));
-        assert!(matches(B, TagFilter::some([A, B])));
+        assert!(matches(A, TagFilter::any_of(A)));
+        assert!(matches(A, TagFilter::any_of([A, B])));
+        assert!(matches(B, TagFilter::any_of([A, B])));
 
         assert!(!matches(A, B));
         assert!(!matches(A, TagFilter::none()));
-        assert!(!matches(A, TagFilter::all(B)));
-        assert!(!matches(A, TagFilter::all([A, B])));
+        assert!(!matches(A, TagFilter::all_of(B)));
+        assert!(!matches(A, TagFilter::all_of([A, B])));
         assert!(!matches(A, B | C));
         assert!(!matches(A, !A));
         assert!(!matches(A, [A, B]));
-        assert!(!matches(A, TagFilter::some([B, C])));
+        assert!(!matches(A, TagFilter::any_of([B, C])));
     }
 
     #[test]
@@ -499,23 +499,23 @@ mod tests {
         assert!(matches([A, B], [A, B]));
         assert!(matches([A, B], [B, A]));
         assert!(matches([A, B], TagFilter::any()));
-        assert!(matches([A, B], TagFilter::all([A])));
-        assert!(matches([A, B], TagFilter::all([A, B])));
-        assert!(matches([A, B], TagFilter::all([A, B]) | [B, C]));
+        assert!(matches([A, B], TagFilter::all_of([A])));
+        assert!(matches([A, B], TagFilter::all_of([A, B])));
+        assert!(matches([A, B], TagFilter::all_of([A, B]) | [B, C]));
         assert!(matches([A, B], !TagFilter::none()));
         assert!(matches([A, B], !A));
         assert!(matches([A, B], !C));
-        assert!(matches([A, B], TagFilter::not([B, C])));
-        assert!(matches([A, B], TagFilter::some([A, B])));
+        assert!(matches([A, B], !TagFilter::all_of([B, C])));
+        assert!(matches([A, B], TagFilter::any_of([A, B])));
 
         assert!(!matches([A, B], [A, C]));
         assert!(!matches([A, B], TagFilter::none()));
-        assert!(!matches([A, B], TagFilter::all([A, C])));
-        assert!(!matches([A, B], TagFilter::all([A, B, C])));
-        assert!(!matches([A, B], TagFilter::all([A, C]) | [B, C]));
+        assert!(!matches([A, B], TagFilter::all_of([A, C])));
+        assert!(!matches([A, B], TagFilter::all_of([A, B, C])));
+        assert!(!matches([A, B], TagFilter::all_of([A, C]) | [B, C]));
         assert!(!matches([A, B], A));
         assert!(!matches([A, B], [A, B, C]));
-        assert!(!matches([A, B], TagFilter::some(C)));
+        assert!(!matches([A, B], TagFilter::any_of(C)));
     }
 
     #[test]

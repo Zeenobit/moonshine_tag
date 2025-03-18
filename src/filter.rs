@@ -44,14 +44,12 @@ use crate::{IntoTags, Tags};
 pub enum TagFilter {
     /// Matches no tags.
     None,
-    /// Matches any set of tags.
-    Any,
     /// Matches any set of tags which is exactly equal to the filter tags.
-    Eq(Tags),
+    Equal(Tags),
     /// Matches any set of tags which contains all of the filter tags.
-    All(Tags),
+    AllOf(Tags),
     /// Matches any set of tags which contains any of the filter tags.
-    Some(Tags),
+    AnyOf(Tags),
     /// Matches any set of tags which matches both inner filters.
     And(TagFilterDyn, TagFilterDyn),
     /// Matches any set of tags which matches either inner filters.
@@ -62,23 +60,19 @@ pub enum TagFilter {
 
 impl TagFilter {
     pub fn none() -> TagFilter {
-        TagFilter::Eq(().into_tags())
+        TagFilter::Equal(().into_tags())
     }
 
     pub fn any() -> TagFilter {
-        TagFilter::Any
+        TagFilter::AllOf(().into_tags())
     }
 
-    pub fn all(all: impl IntoTags) -> TagFilter {
-        TagFilter::All(all.into_tags())
+    pub fn all_of(tags: impl IntoTags) -> TagFilter {
+        TagFilter::AllOf(tags.into_tags())
     }
 
-    pub fn some(some: impl IntoTags) -> TagFilter {
-        TagFilter::Some(some.into_tags())
-    }
-
-    pub fn not(not: impl Into<TagFilter>) -> TagFilter {
-        !not.into()
+    pub fn any_of(tags: impl IntoTags) -> TagFilter {
+        TagFilter::AnyOf(tags.into_tags())
     }
 
     /// Returns `true` if this filter allows the given set of tags.
@@ -86,10 +80,9 @@ impl TagFilter {
         use TagFilter::*;
         match self {
             None => false,
-            Any => true,
-            Eq(a) => a == tags,
-            All(a) => a.is_subset(tags),
-            Some(a) => !a.is_disjoint(tags),
+            Equal(a) => a == tags,
+            AllOf(a) => a.is_subset(tags),
+            AnyOf(a) => !a.is_disjoint(tags),
             And(a, b) => a.allows(tags) && b.allows(tags),
             Or(a, b) => a.allows(tags) || b.allows(tags),
             Not(a) => !a.allows(tags),
@@ -99,13 +92,13 @@ impl TagFilter {
 
 impl Default for TagFilter {
     fn default() -> Self {
-        Self::Any
+        Self::any()
     }
 }
 
 impl<T: IntoTags> From<T> for TagFilter {
     fn from(tags: T) -> Self {
-        Self::Eq(tags.into_tags())
+        Self::Equal(tags.into_tags())
     }
 }
 
