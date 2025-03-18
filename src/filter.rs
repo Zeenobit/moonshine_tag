@@ -19,7 +19,7 @@ use crate::{IntoTags, Tags};
 ///
 /// # Examples
 /// ```rust
-/// use moonshine_tag::{prelude::*, all, matches};
+/// use moonshine_tag::{prelude::*, matches};
 ///
 /// tags! { A, B, C };
 ///

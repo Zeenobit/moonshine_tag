@@ -195,7 +195,7 @@ impl Tags {
     ///
     /// ```
     /// use bevy::prelude::*;
-    /// use moonshine_tag::{prelude::*, EMPTY_TAGS};
+    /// use moonshine_tag::{prelude::*};
     ///
     /// let mut world = World::new();
     ///
@@ -203,13 +203,13 @@ impl Tags {
     /// let entity = world.spawn_empty().id();
     ///
     /// // Get tags, or just use the global empty set.
-    /// let tags: &Tags = world.get::<Tags>(entity).unwrap_or(Tags::none());
+    /// let tags = world.get::<Tags>(entity).unwrap_or(Tags::empty());
     ///
     /// assert!(tags.is_empty());
     /// ```
-    pub fn none() -> &'static Tags {
-        static EMPTY_TAGS: Lazy<Tags> = Lazy::new(Tags::new);
-        &EMPTY_TAGS
+    pub fn empty() -> &'static Tags {
+        static EMPTY: Lazy<Tags> = Lazy::new(Tags::new);
+        &EMPTY
     }
 
     /// Creates a new empty set of tags.
@@ -376,7 +376,7 @@ pub trait GetTags {
 
 impl GetTags for World {
     fn tags(&self, entity: Entity) -> &Tags {
-        self.get(entity).unwrap_or(Tags::none())
+        self.get(entity).unwrap_or(Tags::empty())
     }
 }
 
@@ -388,19 +388,19 @@ pub trait GetEntityTags {
 
 impl GetEntityTags for EntityRef<'_> {
     fn tags(&self) -> &Tags {
-        self.get().unwrap_or(Tags::none())
+        self.get().unwrap_or(Tags::empty())
     }
 }
 
 impl GetEntityTags for EntityMut<'_> {
     fn tags(&self) -> &Tags {
-        self.get().unwrap_or(Tags::none())
+        self.get().unwrap_or(Tags::empty())
     }
 }
 
 impl GetEntityTags for EntityWorldMut<'_> {
     fn tags(&self) -> &Tags {
-        self.get().unwrap_or(Tags::none())
+        self.get().unwrap_or(Tags::empty())
     }
 }
 
