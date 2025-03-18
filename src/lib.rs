@@ -146,6 +146,16 @@ impl Not for Tag {
     }
 }
 
+impl IntoIterator for Tag {
+    type Item = Tag;
+
+    type IntoIter = std::iter::Once<Tag>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::iter::once(self)
+    }
+}
+
 /// A collection of tags.
 ///
 /// # Examples
