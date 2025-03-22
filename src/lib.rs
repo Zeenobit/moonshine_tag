@@ -217,7 +217,7 @@ impl Tags {
         Self::default()
     }
 
-    pub fn from_iter(iter: impl Iterator<Item = Tag>) -> Self {
+    pub fn from_iter(iter: impl IntoIterator<Item = Tag>) -> Self {
         Self(HashSet::from_iter(iter))
     }
 
