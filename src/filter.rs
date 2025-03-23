@@ -40,7 +40,7 @@ use crate::{IntoTags, Tags};
 /// assert!(c_or_ab.allows(&ab));
 /// assert!(c_or_ab.allows(&c));
 /// ```
-#[derive(Clone, Serialize, Deserialize, Reflect)]
+#[derive(Clone, Debug, Serialize, Deserialize, Reflect)]
 pub enum TagFilter {
     /// Matches any set of tags which is exactly equal to the filter tags.
     Equal(Tags),
