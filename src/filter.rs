@@ -9,7 +9,7 @@ use bevy_reflect::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{IntoTags, Tags};
+use crate::Tags;
 
 /// A filter which may be used to test a set of tags for a match.
 ///
@@ -19,29 +19,23 @@ use crate::{IntoTags, Tags};
 ///
 /// # Examples
 /// ```rust
-/// use moonshine_tag::{prelude::*, matches};
+/// use moonshine_tag::{prelude::*, filter, Filter};
 ///
 /// tags! { A, B, C };
 ///
-/// let a: Tags = A.into_tags();
-/// let b: Tags = B.into_tags();
-/// let c: Tags = C.into_tags();
-/// let ab: Tags = [A, B].into_tags();
+/// let filter: Filter = filter!([A, B, ..]);
+/// let a = Tags::from([A]);
+/// let ab = Tags::from([A, B]);
+/// let cb = Tags::from([C, B]);
+/// let abc = Tags::from([A, B, C]);
 ///
-/// let a_or_b: TagFilter = A | B;
-/// assert!(a_or_b.allows(&a));
-/// assert!(a_or_b.allows(&b));
-/// assert!(!a_or_b.allows(&ab));
-/// assert!(!a_or_b.allows(&c));
-///
-/// let c_or_ab: TagFilter = C | [A, B];
-/// assert!(!c_or_ab.allows(&a));
-/// assert!(!c_or_ab.allows(&b));
-/// assert!(c_or_ab.allows(&ab));
-/// assert!(c_or_ab.allows(&c));
+/// assert!(filter.allows(&ab));
+/// assert!(filter.allows(&abc));
+/// assert!(!filter.allows(&a));
+/// assert!(!filter.allows(&cb));
 /// ```
-#[derive(Clone, Debug, Serialize, Deserialize, Reflect)]
-pub enum TagFilter {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Reflect)]
+pub enum Filter {
     /// Matches any set of tags which is exactly equal to the filter tags.
     Equal(Tags),
     /// Matches any set of tags which contains all of the filter tags.
@@ -49,37 +43,37 @@ pub enum TagFilter {
     /// Matches any set of tags which contains any of the filter tags.
     AnyOf(Tags),
     /// Matches any set of tags which matches both inner filters.
-    And(TagFilterDyn, TagFilterDyn),
+    And(FilterDyn, FilterDyn),
     /// Matches any set of tags which matches either inner filters.
-    Or(TagFilterDyn, TagFilterDyn),
+    Or(FilterDyn, FilterDyn),
     /// Matches any set of tags which does not match the inner filter.
-    Not(TagFilterDyn),
+    Not(FilterDyn),
 }
 
-impl TagFilter {
-    pub fn none() -> TagFilter {
-        Self::Equal(().into_tags())
+impl Filter {
+    pub fn none() -> Filter {
+        Self::Equal([].into())
     }
 
-    pub fn equal(tags: impl IntoTags) -> TagFilter {
-        Self::Equal(tags.into_tags())
+    pub fn equal(tags: impl Into<Tags>) -> Filter {
+        Self::Equal(tags.into())
     }
 
-    pub fn any() -> TagFilter {
-        Self::AllOf(().into_tags())
+    pub fn any() -> Filter {
+        Self::AllOf([].into())
     }
 
-    pub fn all_of(tags: impl IntoTags) -> TagFilter {
-        Self::AllOf(tags.into_tags())
+    pub fn all_of(tags: impl Into<Tags>) -> Filter {
+        Self::AllOf(tags.into())
     }
 
-    pub fn any_of(tags: impl IntoTags) -> TagFilter {
-        Self::AnyOf(tags.into_tags())
+    pub fn any_of(tags: impl Into<Tags>) -> Filter {
+        Self::AnyOf(tags.into())
     }
 
     /// Returns `true` if this filter allows the given set of tags.
     pub fn allows(&self, tags: &Tags) -> bool {
-        use TagFilter::*;
+        use Filter::*;
         match self {
             Equal(a) => a == tags,
             AllOf(a) => a.is_subset(tags),
@@ -91,19 +85,19 @@ impl TagFilter {
     }
 }
 
-impl Default for TagFilter {
+impl Default for Filter {
     fn default() -> Self {
         Self::any()
     }
 }
 
-impl<T: IntoTags> From<T> for TagFilter {
+impl<T: Into<Tags>> From<T> for Filter {
     fn from(tags: T) -> Self {
-        Self::Equal(tags.into_tags())
+        Self::Equal(tags.into())
     }
 }
 
-impl<T: Into<TagFilter>> BitAnd<T> for TagFilter {
+impl<T: Into<Filter>> BitAnd<T> for Filter {
     type Output = Self;
 
     fn bitand(self, rhs: T) -> Self::Output {
@@ -111,7 +105,7 @@ impl<T: Into<TagFilter>> BitAnd<T> for TagFilter {
     }
 }
 
-impl<T: Into<TagFilter>> BitOr<T> for TagFilter {
+impl<T: Into<Filter>> BitOr<T> for Filter {
     type Output = Self;
 
     fn bitor(self, rhs: T) -> Self::Output {
@@ -119,17 +113,17 @@ impl<T: Into<TagFilter>> BitOr<T> for TagFilter {
     }
 }
 
-impl Not for TagFilter {
-    type Output = TagFilter;
+impl Not for Filter {
+    type Output = Filter;
 
     fn not(self) -> Self::Output {
         Self::Not(Box::new(self))
     }
 }
 
-type TagFilterDyn = Box<TagFilter>;
+type FilterDyn = Box<Filter>;
 
-impl PartialReflect for Box<TagFilter> {
+impl PartialReflect for Box<Filter> {
     fn get_represented_type_info(&self) -> Option<&'static TypeInfo> {
         (**self).get_represented_type_info()
     }
@@ -179,7 +173,7 @@ impl PartialReflect for Box<TagFilter> {
     }
 }
 
-impl Reflect for Box<TagFilter> {
+impl Reflect for Box<Filter> {
     fn into_any(self: Box<Self>) -> Box<dyn Any> {
         (*self).into_any()
     }
@@ -209,31 +203,139 @@ impl Reflect for Box<TagFilter> {
     }
 }
 
-impl FromReflect for Box<TagFilter> {
+impl FromReflect for Box<Filter> {
     fn from_reflect(reflect: &dyn PartialReflect) -> Option<Self> {
-        TagFilter::from_reflect(reflect).map(Box::new)
+        Filter::from_reflect(reflect).map(Box::new)
     }
 }
 
-impl TypePath for Box<TagFilter> {
+impl TypePath for Box<Filter> {
     fn type_path() -> &'static str {
-        TagFilter::type_path()
+        Filter::type_path()
     }
 
     fn short_type_path() -> &'static str {
-        TagFilter::short_type_path()
+        Filter::short_type_path()
     }
 }
 
-impl Typed for Box<TagFilter> {
+impl Typed for Box<Filter> {
     fn type_info() -> &'static TypeInfo {
         static CELL: NonGenericTypeInfoCell = NonGenericTypeInfoCell::new();
         CELL.get_or_set(|| TypeInfo::Opaque(OpaqueInfo::new::<Self>()))
     }
 }
 
-impl GetTypeRegistration for Box<TagFilter> {
+impl GetTypeRegistration for Box<Filter> {
     fn get_type_registration() -> TypeRegistration {
         TypeRegistration::of::<Self>()
     }
+}
+
+#[macro_export]
+macro_rules! filter {
+    ($first:tt $(& $rest:tt)+) => {
+        $crate::filter!($first) $(& $crate::filter!($rest))*
+    };
+    ($first:tt $(| $rest:tt)+) => {
+        $crate::filter!($first) $(| $crate::filter!($rest))*
+    };
+
+    // TODO: Handle mixed terms? Is that possible?
+
+    // Handle empty pattern `[]`
+    ([]) => {
+        $crate::Filter::none()
+    };
+
+    // Handle wildcard `[..]`
+    ([..]) => {
+        $crate::Filter::any()
+    };
+
+    // Handle equal patterns `[A]`,`[A, B]`, ...
+    ([$($tags:ident),* $(,)?]) => {
+        $crate::Filter::equal([$($tags),*])
+    };
+
+    // Handle negation `![...]`
+    (![$tag:ident $(,)?]) => {
+        !$crate::Filter::equal([$tag])
+    };
+    (![$($tag:ident),* $(,)?]) => {
+        !$crate::Filter::equal([$($tag),*])
+    };
+    (![$($tag:ident),* , .. $(,)?]) => {
+        !$crate::Filter::all_of([$($tag),*])
+    };
+
+    // Handle any_of pattern `[A | B]`
+    ([$($tag:ident)|+ $(,)?]) => {
+        $crate::Filter::any_of([$($tag),*])
+    };
+
+    // Handle all_of pattern `[A, ..]` and `[A, B, ..]`
+    ([$tag:ident, .. $(,)?]) => {
+        $crate::Filter::all_of([$tag])
+    };
+    ([$($tag:ident),+ , .. $(,)?]) => {
+        $crate::Filter::all_of([$($tag),*])
+    };
+}
+
+#[test]
+fn test_filter_macro_expansion() {
+    crate::tags!(A, B, C);
+
+    assert_eq!(filter!([]), Filter::none());
+
+    assert_eq!(filter!([A]), Filter::equal([A]));
+    assert_eq!(filter!([A, B]), Filter::equal([A, B]));
+    assert_eq!(filter!([A, B]), Filter::equal([B, A]));
+    assert_eq!(filter!([A, B,]), Filter::equal([A, B]));
+
+    assert_eq!(filter!([..]), Filter::any());
+
+    assert_eq!(filter!([A, ..]), Filter::all_of([A]));
+    assert_eq!(filter!([A, B, ..]), Filter::all_of([A, B]));
+    assert_eq!(filter!([A, B, ..]), Filter::all_of([B, A]));
+
+    assert_eq!(filter!([A | B]), Filter::any_of([A, B]));
+
+    assert_eq!(filter!([A | B]), Filter::any_of([A, B]));
+
+    assert_eq!(
+        filter!([A, B] & [C, ..]),
+        Filter::equal([A, B]) & Filter::all_of([C])
+    );
+
+    assert_eq!(
+        filter!([A, B] & [C, ..]),
+        Filter::equal([A, B]) & Filter::all_of([C])
+    );
+
+    assert_eq!(
+        filter!([A, B] & [C, ..] & [A, ..]),
+        Filter::equal([A, B]) & Filter::all_of([C]) & Filter::all_of([A])
+    );
+
+    assert_eq!(
+        filter!([A, B] | [C, ..]),
+        Filter::equal([A, B]) | Filter::all_of([C])
+    );
+
+    assert_eq!(
+        filter!([A, B] | [C, ..] | [A, ..]),
+        Filter::equal([A, B]) | Filter::all_of([C]) | Filter::all_of([A])
+    );
+
+    assert_eq!(
+        filter!([A, B, ..] & [C, ..]),
+        Filter::all_of([A, B]) & Filter::all_of([C])
+    );
+
+    assert_eq!(
+        filter!([A, B, ..] | [C]),
+        Filter::all_of([A, B]) | Filter::equal([C])
+    );
 }

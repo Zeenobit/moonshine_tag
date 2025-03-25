@@ -1,15 +1,20 @@
 pub mod prelude {
-    pub use crate::{
-        tags, GetEntityTags, GetTags, IntoTags, Tag, TagFilter, TagPlugin, Tags, WithTags,
-    };
+    pub use crate::{tags, Tag, TagPlugin, Tags, WithTags};
+
+    #[deprecated(since = "0.1.1", note = "import `Filter` explicitly")]
+    pub type TagFilter = crate::Filter;
+
+    #[allow(deprecated)]
+    pub use crate::{GetEntityTags, GetTags, IntoTags}; // TODO: Remove
 }
 
 mod filter;
 
+pub use filter::*;
+
 use std::{
     fmt,
     hash::{Hash, Hasher},
-    ops::{BitAnd, BitOr, Not},
 };
 
 use bevy_app::{App, Plugin};
@@ -18,8 +23,6 @@ use bevy_reflect::prelude::*;
 use bevy_utils::HashSet;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-
-pub use filter::TagFilter;
 
 /// A [`Plugin`] required to register tag related types for reflection.
 pub struct TagPlugin;
@@ -31,10 +34,10 @@ impl Plugin for TagPlugin {
             .register_type::<HashSet<Tag>>()
             .register_type_data::<HashSet<Tag>, ReflectSerialize>()
             .register_type_data::<HashSet<Tag>, ReflectDeserialize>()
-            .register_type::<TagFilter>()
-            .register_type::<Box<TagFilter>>()
-            .register_type_data::<Box<TagFilter>, ReflectSerialize>()
-            .register_type_data::<Box<TagFilter>, ReflectDeserialize>();
+            .register_type::<Filter>()
+            .register_type::<Box<Filter>>()
+            .register_type_data::<Box<Filter>, ReflectSerialize>()
+            .register_type_data::<Box<Filter>, ReflectDeserialize>();
     }
 }
 
@@ -122,30 +125,6 @@ impl FromWorld for Tag {
     }
 }
 
-impl<T: Into<TagFilter>> BitAnd<T> for Tag {
-    type Output = TagFilter;
-
-    fn bitand(self, rhs: T) -> Self::Output {
-        TagFilter::Equal(self.into()) & rhs
-    }
-}
-
-impl<T: Into<TagFilter>> BitOr<T> for Tag {
-    type Output = TagFilter;
-
-    fn bitor(self, rhs: T) -> Self::Output {
-        TagFilter::Equal(self.into()) | rhs
-    }
-}
-
-impl Not for Tag {
-    type Output = TagFilter;
-
-    fn not(self) -> Self::Output {
-        !TagFilter::Equal(self.into())
-    }
-}
-
 impl IntoIterator for Tag {
     type Item = Tag;
 
@@ -217,10 +196,6 @@ impl Tags {
         Self::default()
     }
 
-    pub fn from_iter(iter: impl IntoIterator<Item = Tag>) -> Self {
-        Self(HashSet::from_iter(iter))
-    }
-
     /// Returns the number of tags in this set.
     pub fn len(&self) -> usize {
         self.0.len()
@@ -253,13 +228,13 @@ impl Tags {
 
     /// Returns the union of this and another set of tags.
     #[must_use]
-    pub fn union(mut self, other: impl IntoTags) -> Self {
-        self.extend(other.into_tags());
+    pub fn union(mut self, other: impl Into<Tags>) -> Self {
+        self.extend(other.into());
         self
     }
 
-    pub fn extend(&mut self, other: impl IntoTags) {
-        self.0.extend(other.into_tags());
+    pub fn extend(&mut self, other: impl Into<Tags>) {
+        self.0.extend(other.into());
     }
 
     /// Returns `true` if this set has no tags in common with another set.
@@ -286,9 +261,15 @@ impl From<Tag> for Tags {
     }
 }
 
+impl FromIterator<Tag> for Tags {
+    fn from_iter<T: IntoIterator<Item = Tag>>(iter: T) -> Self {
+        Self(HashSet::from_iter(iter))
+    }
+}
+
 impl<const N: usize> From<[Tag; N]> for Tags {
     fn from(tags: [Tag; N]) -> Self {
-        Tags::from_iter(tags.into_iter())
+        Tags::from_iter(tags)
     }
 }
 
@@ -316,30 +297,6 @@ impl IntoIterator for Tags {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
-    }
-}
-
-impl<T: Into<TagFilter>> BitAnd<T> for Tags {
-    type Output = TagFilter;
-
-    fn bitand(self, rhs: T) -> Self::Output {
-        TagFilter::from(self) & rhs
-    }
-}
-
-impl<T: Into<TagFilter>> BitOr<T> for Tags {
-    type Output = TagFilter;
-
-    fn bitor(self, rhs: T) -> Self::Output {
-        TagFilter::from(self) | rhs
-    }
-}
-
-impl Not for Tags {
-    type Output = TagFilter;
-
-    fn not(self) -> Self::Output {
-        !TagFilter::from(self)
     }
 }
 
@@ -395,6 +352,7 @@ where
 /// An extension trait to get [`Entity`] tags from a [`World`].
 pub trait GetTags {
     /// Returns the tags associated with this entity, if any, or the empty set.
+    #[deprecated(since = "0.1.1", note = "use `.unwrap_or(Tags::empty())` instead")]
     fn tags(&self, entity: Entity) -> &Tags;
 }
 
@@ -407,6 +365,7 @@ impl GetTags for World {
 /// An extension trait to get tags from an [`EntityRef`], [`EntityMut`], or [`EntityWorldMut`].
 pub trait GetEntityTags {
     /// Returns the tags associated with this entity, if any, or the empty set.
+    #[deprecated(since = "0.1.1", note = "use `.unwrap_or(Tags::empty())` instead")]
     fn tags(&self) -> &Tags;
 }
 
@@ -428,38 +387,20 @@ impl GetEntityTags for EntityWorldMut<'_> {
     }
 }
 
+#[deprecated(since = "0.1.1", note = "use standard `Into` instead")]
 pub trait IntoTags {
     fn into_tags(self) -> Tags;
 }
 
-impl IntoTags for () {
+#[allow(deprecated)]
+impl<T: Into<Tags>> IntoTags for T {
     fn into_tags(self) -> Tags {
-        Tags::new()
+        self.into()
     }
 }
 
-impl IntoTags for Tag {
-    fn into_tags(self) -> Tags {
-        let mut tags = Tags::new();
-        tags.insert(self);
-        tags
-    }
-}
-
-impl<const N: usize> IntoTags for [Tag; N] {
-    fn into_tags(self) -> Tags {
-        Tags(self.into_iter().flat_map(|t| t.into_tags()).collect())
-    }
-}
-
-impl IntoTags for Tags {
-    fn into_tags(self) -> Tags {
-        self
-    }
-}
-
-pub fn matches(tags: impl IntoTags, filter: impl Into<TagFilter>) -> bool {
-    filter.into().allows(&tags.into_tags())
+pub fn matches(tags: impl Into<Tags>, filter: &Filter) -> bool {
+    filter.allows(&tags.into())
 }
 
 #[cfg(test)]
@@ -476,71 +417,59 @@ mod tests {
 
     #[test]
     fn match_empty() {
-        assert!(matches((), ()));
-        assert!(matches((), TagFilter::any()));
-        assert!(matches((), TagFilter::all_of(())));
-        assert!(matches((), TagFilter::none()));
-        assert!(matches((), TagFilter::any() | ()));
-        assert!(matches((), TagFilter::any() | TagFilter::none()));
-        assert!(matches((), TagFilter::any() & ()));
-        assert!(matches((), TagFilter::any() & TagFilter::none()));
+        assert!(matches([], &filter!([])));
+        assert!(matches([], &filter!([..])));
+        assert!(matches([], &filter!([..] | [])));
+        assert!(matches([], &filter!([..] & [])));
 
-        assert!(!matches((), !TagFilter::from(())));
-        assert!(!matches((), !TagFilter::any()));
-        assert!(!matches((), !TagFilter::none()));
-        assert!(!matches((), A));
-        assert!(!matches((), [A, B]));
-        assert!(!matches((), TagFilter::any_of(A)));
-        assert!(!matches((), TagFilter::any_of([A, B])));
+        assert!(!matches([], &filter!(![])));
+        assert!(!matches([], &filter!([A])));
+        assert!(!matches([], &filter!([A, ..])));
+        assert!(!matches([], &filter!([A, B])));
+        assert!(!matches([], &filter!([A | B])));
     }
 
     #[test]
     fn match_tag() {
-        assert!(matches(A, A));
-        assert!(matches(A, TagFilter::any()));
-        assert!(matches(A, TagFilter::all_of(A)));
-        assert!(matches(A, A | B));
-        assert!(matches(A, B | A));
-        assert!(matches(A, !TagFilter::none()));
-        assert!(matches(A, !B));
-        assert!(matches(A, !C));
-        assert!(matches(A, TagFilter::any_of(A)));
-        assert!(matches(A, TagFilter::any_of([A, B])));
-        assert!(matches(B, TagFilter::any_of([A, B])));
+        assert!(matches(A, &filter!([..])));
+        assert!(matches(A, &filter!([..] | [])));
+        assert!(matches(A, &filter!(![])));
+        assert!(matches(A, &filter!([A])));
+        assert!(matches(A, &filter!([A | B])));
+        assert!(matches(A, &filter!([B | A])));
+        assert!(matches(A, &filter!(![B])));
+        assert!(matches(A, &filter!([A, ..])));
+        assert!(matches(A, &filter!([A, ..] | [B])));
 
-        assert!(!matches(A, B));
-        assert!(!matches(A, TagFilter::none()));
-        assert!(!matches(A, TagFilter::all_of(B)));
-        assert!(!matches(A, TagFilter::all_of([A, B])));
-        assert!(!matches(A, B | C));
-        assert!(!matches(A, !A));
-        assert!(!matches(A, [A, B]));
-        assert!(!matches(A, TagFilter::any_of([B, C])));
+        assert!(!matches(A, &filter!([])));
+        assert!(!matches(A, &filter!(![A])));
+        assert!(!matches(A, &filter!([B])));
+        assert!(!matches(A, &filter!([A, B, ..])));
+        assert!(!matches(A, &filter!([B, A, ..])));
+        assert!(!matches(A, &filter!([B | C])));
+        assert!(!matches(A, &filter!([B, C, ..])));
     }
 
     #[test]
     fn match_tags() {
-        assert!(matches([A, B], [A, B]));
-        assert!(matches([A, B], [B, A]));
-        assert!(matches([A, B], TagFilter::any()));
-        assert!(matches([A, B], TagFilter::all_of([A])));
-        assert!(matches([A, B], TagFilter::all_of([A, B])));
-        assert!(matches([A, B], TagFilter::all_of([A, B]) | [B, C]));
-        assert!(matches([A, B], !TagFilter::none()));
-        assert!(matches([A, B], !A));
-        assert!(matches([A, B], !C));
-        assert!(matches([A, B], !TagFilter::all_of([B, C])));
-        assert!(matches([A, B], TagFilter::any_of([A, B])));
+        assert!(matches([A, B], &filter!([..])));
+        assert!(matches([A, B], &filter!([..] | [])));
+        assert!(matches([A, B], &filter!(![])));
+        assert!(matches([A, B], &filter!([A, B])));
+        assert!(matches([A, B], &filter!([B, A])));
+        assert!(matches([A, B], &filter!([A, ..])));
+        assert!(matches([A, B], &filter!([A, B, ..])));
+        assert!(matches([A, B], &filter!([A, B, ..] | [B, C])));
 
-        assert!(!matches([A, B], [A, C]));
-        assert!(!matches([A, B], TagFilter::none()));
-        assert!(!matches([A, B], TagFilter::all_of([A, C])));
-        assert!(!matches([A, B], TagFilter::all_of([A, B, C])));
-        assert!(!matches([A, B], TagFilter::all_of([A, C]) | [B, C]));
-        assert!(!matches([A, B], A));
-        assert!(!matches([A, B], !TagFilter::from([A, B])));
-        assert!(!matches([A, B], [A, B, C]));
-        assert!(!matches([A, B], TagFilter::any_of(C)));
+        assert!(!matches([A, B], &filter!([])));
+        assert!(!matches([A, B], &filter!([A])));
+        assert!(!matches([A, B], &filter!([A, B, C])));
+        assert!(!matches([A, B], &filter!(![A, B])));
+        assert!(!matches([A, B], &filter!([A, C])));
+        assert!(!matches([A, B], &filter!([A, C, ..])));
+        assert!(!matches([A, B], &filter!([A, B, C, ..])));
+        assert!(!matches([A, B], &filter!([A, C, ..] | [B, C])));
+        assert!(!matches([A, B], &filter!([C, ..])));
     }
 
     #[test]
@@ -550,16 +479,22 @@ mod tests {
             .spawn((WithTags(|| [A]), WithTags(|| [A, B]), WithTags(|| [B, C])))
             .id();
         world.flush();
-        assert_eq!(world.tags(entity), [A, B, C]);
+        assert_eq!(
+            world.get::<Tags>(entity).unwrap_or(Tags::empty()),
+            [A, B, C]
+        );
     }
 
     #[test]
     fn with_tags_existing() {
         let mut world = World::new();
         let entity = world
-            .spawn((A.into_tags(), WithTags(|| [A, B]), WithTags(|| [B, C])))
+            .spawn((Tags::from(A), WithTags(|| [A, B]), WithTags(|| [B, C])))
             .id();
         world.flush();
-        assert_eq!(world.tags(entity), [A, B, C]);
+        assert_eq!(
+            world.get::<Tags>(entity).unwrap_or(Tags::empty()),
+            [A, B, C]
+        );
     }
 }
