@@ -74,7 +74,7 @@ macro_rules! tags {
 /// assert_eq!(A, A);
 /// assert_ne!(A, B);
 /// ```
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Reflect)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Reflect)]
 #[reflect(Hash, PartialEq)]
 pub struct Tag(u64);
 
