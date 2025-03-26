@@ -1,5 +1,5 @@
 pub mod prelude {
-    pub use crate::{tags, Tag, TagPlugin, Tags, WithTags};
+    pub use crate::{tags, ComponentTags, Tag, TagPlugin, Tags, WithTags};
 
     #[deprecated(since = "0.1.1", note = "import `Filter` explicitly")]
     pub type TagFilter = crate::Filter;
@@ -15,6 +15,7 @@ pub use filter::*;
 use std::{
     fmt,
     hash::{Hash, Hasher},
+    marker::PhantomData,
 };
 
 use bevy_app::{App, Plugin};
@@ -307,6 +308,10 @@ impl IntoIterator for Tags {
 /// This is useful for adding tags to entities which may or may not have a `Tags` component
 /// already without replacing the existing tags, especially when spawning bundles.
 ///
+/// This implementation takes advantage of the unique type signature of Rust lambda functions
+/// to avoid conflicts when used in bundles. While more flexible, this usage is not possible
+/// as component requirements. For that, see [`ComponentTags`].
+///
 /// # Examples
 /// ```
 /// # use bevy::prelude::*;
@@ -317,7 +322,7 @@ impl IntoIterator for Tags {
 /// let mut world = World::new();
 /// let entity = world.spawn((WithTags(|| [A, B]), WithTags(|| [B, C]))).id();
 /// world.flush();
-/// assert_eq!(world.tags(entity), [A, B, C]);
+/// assert_eq!(world.get::<Tags>(entity).unwrap(), [A, B, C]);
 /// ```
 #[derive(Component)]
 #[component(storage = "SparseSet")]
@@ -346,6 +351,62 @@ where
                     entity.insert(new_tags);
                 }
             });
+    }
+}
+
+/// A [`Component`] which merges a set of tags into single [`Tags`] component.
+///
+/// # Usage
+///
+/// This is similar to [`WithTags`], except that it may be used as a component requirement.
+///
+/// Note that `T` can be anything. By convention, it is best to use `Self` to avoid requirement conflicts.
+///
+/// # Examples
+/// ```
+/// # use bevy::prelude::*;
+/// # use moonshine_tag::prelude::*;
+///
+/// tags! { A, B, C };
+///
+/// #[derive(Component)]
+/// #[require(ComponentTags<Self>(|| A))]
+/// struct Foo;
+///
+/// #[derive(Component)]
+/// #[require(ComponentTags<Self>(|| [B, C]))]
+/// struct Bar;
+///
+/// let mut world = World::new();
+/// let entity = world.spawn((Foo, Bar)).id();
+/// world.flush();
+/// assert_eq!(world.get::<Tags>(entity).unwrap(), [A, B, C]);
+/// ```
+#[derive(Component)]
+#[component(storage = "SparseSet")]
+#[component(on_add = Self::on_add)]
+pub struct ComponentTags<T: Component>(Tags, PhantomData<T>);
+
+impl<T: Component> ComponentTags<T> {
+    fn on_add(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
+        world
+            .commands()
+            .entity(entity)
+            .queue(|entity: Entity, world: &mut World| {
+                let mut entity = world.entity_mut(entity);
+                let ComponentTags(new_tags, ..) = entity.take::<Self>().unwrap();
+                if let Some(mut tags) = entity.get_mut::<Tags>() {
+                    tags.extend(new_tags);
+                } else {
+                    entity.insert(new_tags);
+                }
+            });
+    }
+}
+
+impl<T: Component, I: Into<Tags>> From<I> for ComponentTags<T> {
+    fn from(tags: I) -> Self {
+        Self(tags.into(), PhantomData)
     }
 }
 
