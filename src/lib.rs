@@ -52,7 +52,7 @@ macro_rules! tags {
         $crate::tags!($($v $n),*);
     };
 
-    ($v:vis $name:ident) => {
+    ($v:vis $name:ident $(,)?) => {
         $v const $name: $crate::Tag = $crate::Tag::new(stringify!($name));
     };
 }
