@@ -47,13 +47,13 @@ impl Plugin for TagPlugin {
 /// See [`Tag`] for more information.
 #[macro_export]
 macro_rules! tags {
+    ($v:vis $name:ident $(,)?) => {
+        $v const $name: $crate::Tag = $crate::Tag::new(stringify!($name));
+    };
+
     ($v0:vis $n0:ident, $($v:vis $n:ident),* $(,)?) => {
         $v0 const $n0: $crate::Tag = $crate::Tag::new(stringify!($n0));
         $crate::tags!($($v $n),*);
-    };
-
-    ($v:vis $name:ident $(,)?) => {
-        $v const $name: $crate::Tag = $crate::Tag::new(stringify!($name));
     };
 }
 
