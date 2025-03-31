@@ -254,31 +254,31 @@ macro_rules! filter {
     };
 
     // Handle equal patterns `[A]`,`[A, B]`, ...
-    ([$($tags:ident),* $(,)?]) => {
+    ([$($tags:path),* $(,)?]) => {
         $crate::Filter::equal([$($tags),*])
     };
 
     // Handle negation `![...]`
-    (![$tag:ident $(,)?]) => {
+    (![$tag:path $(,)?]) => {
         !$crate::Filter::equal([$tag])
     };
-    (![$($tag:ident),* $(,)?]) => {
+    (![$($tag:path),* $(,)?]) => {
         !$crate::Filter::equal([$($tag),*])
     };
-    (![$($tag:ident),* , .. $(,)?]) => {
+    (![$($tag:path),* , .. $(,)?]) => {
         !$crate::Filter::all_of([$($tag),*])
     };
 
     // Handle any_of pattern `[A | B]`
-    ([$($tag:ident)|+ $(,)?]) => {
+    ([$($tag:path)|+ $(,)?]) => {
         $crate::Filter::any_of([$($tag),*])
     };
 
     // Handle all_of pattern `[A, ..]` and `[A, B, ..]`
-    ([$tag:ident, .. $(,)?]) => {
+    ([$tag:path, .. $(,)?]) => {
         $crate::Filter::all_of([$tag])
     };
-    ([$($tag:ident),+ , .. $(,)?]) => {
+    ([$($tag:path),+ , .. $(,)?]) => {
         $crate::Filter::all_of([$($tag),*])
     };
 }
