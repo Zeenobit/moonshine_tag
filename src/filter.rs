@@ -3,6 +3,7 @@ use std::{
     ops::{BitAnd, BitOr, Not},
 };
 
+use bevy_reflect::ReflectCloneError;
 use bevy_reflect::{
     prelude::*, utility::NonGenericTypeInfoCell, ApplyError, GetTypeRegistration, OpaqueInfo,
     ReflectMut, ReflectOwned, ReflectRef, TypeInfo, TypePath, TypeRegistration, Typed,
@@ -168,8 +169,8 @@ impl PartialReflect for Box<Filter> {
         (*self).reflect_owned()
     }
 
-    fn clone_value(&self) -> Box<dyn PartialReflect> {
-        (**self).clone_value()
+    fn reflect_clone(&self) -> Result<Box<dyn Reflect>, ReflectCloneError> {
+        (**self).reflect_clone()
     }
 }
 

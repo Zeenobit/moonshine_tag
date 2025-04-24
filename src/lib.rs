@@ -10,6 +10,7 @@ pub mod prelude {
 
 mod filter;
 
+use bevy_ecs::component::HookContext;
 pub use filter::*;
 
 use std::{
@@ -19,9 +20,9 @@ use std::{
 };
 
 use bevy_app::{App, Plugin};
-use bevy_ecs::{component::ComponentId, prelude::*, world::DeferredWorld};
+use bevy_ecs::{prelude::*, world::DeferredWorld};
+use bevy_platform::collections::HashSet;
 use bevy_reflect::prelude::*;
-use bevy_utils::HashSet;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
@@ -296,7 +297,7 @@ impl<const N: usize> PartialEq<Tags> for [Tag; N] {
 
 impl IntoIterator for Tags {
     type Item = Tag;
-    type IntoIter = bevy_utils::hashbrown::hash_set::IntoIter<Self::Item>;
+    type IntoIter = bevy_platform::collections::hash_set::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -339,20 +340,18 @@ where
     F: 'static + Send + Sync,
     I: 'static + Send + Sync,
 {
-    fn on_add(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
-        world
-            .commands()
-            .entity(entity)
-            .queue(|entity: Entity, world: &mut World| {
-                let mut entity = world.entity_mut(entity);
-                let this = entity.take::<Self>().unwrap();
-                let new_tags = Tags::from_iter(this.0().into_iter());
-                if let Some(mut tags) = entity.get_mut::<Tags>() {
-                    tags.extend(new_tags);
-                } else {
-                    entity.insert(new_tags);
-                }
-            });
+    fn on_add(mut world: DeferredWorld, ctx: HookContext) {
+        let entity = ctx.entity;
+        world.commands().queue(move |world: &mut World| {
+            let mut entity = world.entity_mut(entity);
+            let this = entity.take::<Self>().unwrap();
+            let new_tags = Tags::from_iter(this.0().into_iter());
+            if let Some(mut tags) = entity.get_mut::<Tags>() {
+                tags.extend(new_tags);
+            } else {
+                entity.insert(new_tags);
+            }
+        });
     }
 }
 
@@ -390,19 +389,17 @@ where
 pub struct ComponentTags<T: Component>(Tags, PhantomData<T>);
 
 impl<T: Component> ComponentTags<T> {
-    fn on_add(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
-        world
-            .commands()
-            .entity(entity)
-            .queue(|entity: Entity, world: &mut World| {
-                let mut entity = world.entity_mut(entity);
-                let ComponentTags(new_tags, ..) = entity.take::<Self>().unwrap();
-                if let Some(mut tags) = entity.get_mut::<Tags>() {
-                    tags.extend(new_tags);
-                } else {
-                    entity.insert(new_tags);
-                }
-            });
+    fn on_add(mut world: DeferredWorld, ctx: HookContext) {
+        let entity = ctx.entity;
+        world.commands().queue(move |world: &mut World| {
+            let mut entity = world.entity_mut(entity);
+            let ComponentTags(new_tags, ..) = entity.take::<Self>().unwrap();
+            if let Some(mut tags) = entity.get_mut::<Tags>() {
+                tags.extend(new_tags);
+            } else {
+                entity.insert(new_tags);
+            }
+        });
     }
 }
 
