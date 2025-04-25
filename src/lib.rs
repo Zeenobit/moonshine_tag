@@ -10,21 +10,20 @@ pub mod prelude {
 
 mod filter;
 
-use bevy_ecs::component::HookContext;
-pub use filter::*;
-
-use std::{
-    fmt,
-    hash::{Hash, Hasher},
-    marker::PhantomData,
-};
+use std::fmt;
+use std::hash::{Hash, Hasher};
+use std::marker::PhantomData;
 
 use bevy_app::{App, Plugin};
-use bevy_ecs::{prelude::*, world::DeferredWorld};
+use bevy_ecs::component::HookContext;
+use bevy_ecs::prelude::*;
+use bevy_ecs::world::DeferredWorld;
 use bevy_platform::collections::HashSet;
 use bevy_reflect::prelude::*;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+
+pub use self::filter::*;
 
 /// A [`Plugin`] required to register tag related types for reflection.
 pub struct TagPlugin;
@@ -76,7 +75,7 @@ macro_rules! tags {
 /// ```rust
 /// use moonshine_tag::prelude::*;
 ///
-/// tags! { A, B };
+/// tags! { A, pub B };
 ///
 /// assert_eq!(A, A);
 /// assert_ne!(A, B);

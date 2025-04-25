@@ -4,7 +4,7 @@
 [![downloads](https://img.shields.io/crates/dr/moonshine-tag?label=downloads)](https://crates.io/crates/moonshine-tag)
 [![docs.rs](https://docs.rs/moonshine-tag/badge.svg)](https://docs.rs/moonshine-tag)
 [![license](https://img.shields.io/crates/l/moonshine-tag)](https://github.com/Zeenobit/moonshine_tag/blob/main/LICENSE)
-[![stars](https://img.shields.io/github/stars/Zeenobit/tag)](https://github.com/Zeenobit/moonshine_tag)
+[![stars](https://img.shields.io/github/stars/Zeenobit/moonshine_tag)](https://github.com/Zeenobit/moonshine_tag)
 
 Cheap, fast, mostly unique identifiers designed for [Bevy](https://github.com/bevyengine/bevy).
 
@@ -20,18 +20,23 @@ tags! { APPLE, ORANGE, JUICY, CRUNCHY, POISONED }
 
 let mut world = World::new();
 
-// Spawn some fruits!
-let a = world.spawn([APPLE, CRUNCHY].into_tags()).id();
-let b = world.spawn([ORANGE, JUICY].into_tags()).id();
-let c = world.spawn([APPLE, CRUNCHY, POISONED].into_tags()).id();
+// Define some fruits!
+let fruits = [
+    Tags::from([APPLE, CRUNCHY]),
+    Tags::from([ORANGE, JUICY]),
+    Tags::from([APPLE, CRUNCHY, POISONED])
+];
 
 // Only crunchy, edible apples, please! :)
-let filter: TagFilter = (APPLE & CRUNCHY) & !POISONED;
+let filter: tag::Filter = tag::filter!([APPLE, CRUNCHY] & ![POISONED]);
 
-assert!(filter.allows(world.tags(a)));
+for fruit in fruits {
+    if filter.allows(fruit) {
+        world.spawn(fruit);
+    }
+}
 
-assert!(!filter.allows(world.tags(b)));
-assert!(!filter.allows(world.tags(c)));
+# assert!(filter.allows(fruits[0]));
 ```
 
 ### Features
@@ -45,7 +50,7 @@ assert!(!filter.allows(world.tags(c)));
 
 ### Tags
 
-You may define tags from any arbitrary string:
+You may define [`Tags`] from any arbitrary string:
 
 ```rust
 use moonshine_tag::prelude::*;
@@ -69,25 +74,27 @@ use moonshine_tag::prelude::*;
 
 tags! { A, B, C }
 
-let a: Tags = A.into_tags();
-let ab = [A, B].into_tags();
-let c = C.into_tags();
+let a = Tags::from(A);
+let c = Tags::from([C]);
+let ab = Tags::from([A, B]);
 let ac = a.union(c);
 ```
 
+[`Tags`] may be used as a [`Component`] or on its own as a generic collection of tags.
+
 ### Tag Filters
 
-A [`TagFilter`] is used to test if a given [`Tags`] set matches a certain pattern:
+A tag [`Filter`] is used to test if a given [`Tags`] set matches a certain pattern:
 
 ```rust
-use moonshine_tag::prelude::*;
+use moonshine_tag::prelude::{*, self as tag};
 
 tags! { A, B, C }
 
-let a = A.into_tags();
-let c = C.into_tags();
+let a = Tags::from(A);
+let c = Tags::from(C);
 
-let a_or_b: TagFilter = A | B;
+let a_or_b: tag::Filter = A | B;
 
 assert!(a_or_b.allows(a));
 assert!(!a_or_b.allows(c));
@@ -100,15 +107,27 @@ use moonshine_tag::prelude::*;
 
 tags! { A, B, C, D }
 
-let ab = [A, B].into_tags();
-let c = C.into_tags();
-let cd = [C, D].into_tags();
+let ab = Tags::from([A, B]);
+let cd = Tags::from([C, D]);
+let c = Tags::from(C);
 
 let filter = ([A, B] | C) & D;
 
 assert!(!filter.allows(ab));
 assert!(!filter.allows(c));
 assert!(filter.allows(cd));
+```
+
+There is also a convenient `filter!` macro for constructing tag filters from tag expressions:
+
+```rust
+use moonshine_tag::prelude::{*, self as tag};
+
+tags! { A, B, C, D }
+
+let _: tag::Filter = tag::filter!([A, B, ..]);       // Matches any tag set containing A or B
+let _: tag::Filter = tag::filter!([A, B, ..] | [C]); // Matches any tag set which contains A or B, or exactly C
+let _: tag::Filter = tag::filter!([A, B] & ![C]);    // Matches any tag set containing A or B but not C
 ```
 
 ## Limitations and Guidelines
@@ -123,6 +142,25 @@ However, you should **NOT** use tags for any cryptographic purposes, or as globa
 
 Instead, prefer to use them for convenient, dynamic pattern matching or flagging "things" within your systems, especially entities.
 
-[`Tag`]:https://docs.rs/moonshine-kind/latest/moonshine_tag/struct.Tag.html
-[`Tags`]:https://docs.rs/moonshine-kind/latest/moonshine_tag/struct.Tags.html
-[`TagFilter`]:https://docs.rs/moonshine-kind/latest/moonshine_tag/struct.Tags.html
+## Installation
+
+Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+moonshine-tag = "0.2.0"
+```
+
+This crate is also included as part of [🍸 Moonshine Core](https://github.com/Zeenobit/moonshine_core).
+
+## Support
+
+Please [post an issue](https://github.com/Zeenobit/moonshine_tag/issues/new) for any bugs, questions, or suggestions.
+
+You may also contact me on the official [Bevy Discord](https://discord.gg/bevy) server as **@Zeenobit**.
+
+
+[`Tag`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html
+[`Tags`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tags.html
+[`Filter`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Filter.html
+[`Component`]:https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html
