@@ -233,6 +233,41 @@ impl GetTypeRegistration for Box<Filter> {
     }
 }
 
+/// A macro for creating a [`Filter`] from a "tag expression".
+///
+/// #### ⚠️ Warning
+///
+/// This macro is experimental and in development!
+/// It is possible that the syntax might change in the future, or that some cases are not handled.
+/// Please report any issues you encounter or improvements you would like to see.
+///
+/// # Usage
+///
+/// A tag expression is a sequence of tag patterns separated by `&` or `|` operators.
+///
+/// A tag pattern is a list of tags with some special operators:
+///
+/// - `[]` - Empty pattern, matches no tags.
+/// - `[..]` - Wildcard pattern, matches any tags.
+/// - `[A, B]` - Matches exactly the tags `A` and `B`.
+/// - `[A, B, ..]` - Matches any tags that contain `A` and `B`, but may also contain other tags.
+/// - `[A | B]` - Matches any tags that contain either `A` or `B`.
+/// - `![A, B]` - Matches any tags that contain neither `A`, nor `B`.
+///
+/// These patterns may be chained with `&` and `|` operators to create complex filters.
+///
+/// # Examples
+///
+/// ```rust
+/// use moonshine_tag::{prelude::*, self as tag};
+///
+/// let _: tag::Filter = tag::filter!([A, B] | [C, ..]); // Matches any tags that are exactly `A` and `B`, or any tags that contain `C`.
+/// let _: tag::Filter = tag::filter!([A, B, ..] & ![C]); // Matches any tags contain `A` and `B`, but not `C`.
+/// ```
+///
+/// # Limitations
+///
+/// At the moment, it is not possible to mix `&` and `|` operators in the same expression.
 #[macro_export]
 macro_rules! filter {
     ($first:tt $(& $rest:tt)+) => {
