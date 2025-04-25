@@ -237,6 +237,7 @@ impl Tags {
         self
     }
 
+    /// Adds all tags from another set to this one.
     pub fn extend(&mut self, other: impl Into<Tags>) {
         self.0.extend(other.into());
     }
@@ -459,10 +460,6 @@ impl<T: Into<Tags>> IntoTags for T {
     }
 }
 
-pub fn matches(tags: impl Into<Tags>, filter: &Filter) -> bool {
-    filter.allows(&tags.into())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -473,6 +470,10 @@ mod tests {
     fn match_eq() {
         assert_eq!(A, A);
         assert_ne!(A, B);
+    }
+
+    pub fn matches(tags: impl Into<Tags>, filter: &Filter) -> bool {
+        filter.allows(&tags.into())
     }
 
     #[test]
