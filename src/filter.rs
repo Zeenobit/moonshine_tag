@@ -264,10 +264,12 @@ impl GetTypeRegistration for Box<Filter> {
 /// # Examples
 ///
 /// ```rust
-/// use moonshine_tag::{prelude::*, self as tag};
+/// use moonshine_tag::{prelude::*, filter, Filter};
 ///
-/// let _: tag::Filter = tag::filter!([A, B] | [C, ..]); // Matches any tags that are exactly `A` and `B`, or any tags that contain `C`.
-/// let _: tag::Filter = tag::filter!([A, B, ..] & ![C]); // Matches any tags contain `A` and `B`, but not `C`.
+/// tags! { A, B, C };
+///
+/// let _: Filter = filter!([A, B] | [C, ..]); // Matches any tags that are exactly `A` and `B`, or any tags that contain `C`.
+/// let _: Filter = filter!(![C]);             // Matches any tags which do not contain `C`.
 /// ```
 ///
 /// # Limitations

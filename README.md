@@ -28,15 +28,15 @@ let fruits = [
 ];
 
 // Only crunchy, edible apples, please! :)
-let filter: tag::Filter = tag::filter!([APPLE, CRUNCHY] & ![POISONED]);
+let filter: tag::Filter = tag::filter!([APPLE, CRUNCHY]) & tag::filter!(![POISONED]);
 
-for fruit in fruits {
+for fruit in &fruits {
     if filter.allows(fruit) {
-        world.spawn(fruit);
+        world.spawn(fruit.clone());
     }
 }
 
-# assert!(filter.allows(fruits[0]));
+# assert!(filter.allows(&fruits[0]));
 ```
 
 ### Features
@@ -55,14 +55,14 @@ You may define [`Tags`] from any arbitrary string:
 ```rust
 use moonshine_tag::prelude::*;
 
-tags! { A0 }; // Convenient macro
+tags! { A }; // Convenient macro
 
 const A1: Tag = Tag::new("A"); // Manual constant
 
 let a2 = Tag::new("A"); // Runtime
 
-assert_eq!(A0, A1);
-assert_eq!(A0, a2);
+assert_eq!(A, A1);
+assert_eq!(A, a2);
 ```
 
 Any two tags with the same name are considered equal.
@@ -87,23 +87,23 @@ let ac = a.union(c);
 A tag [`Filter`] is used to test if a given [`Tags`] set matches a certain pattern:
 
 ```rust
-use moonshine_tag::prelude::{*, self as tag};
+use moonshine_tag::{prelude::*, Filter, filter};
 
 tags! { A, B, C }
 
 let a = Tags::from(A);
 let c = Tags::from(C);
 
-let a_or_b: tag::Filter = A | B;
+let a_or_b: Filter = Filter::any_of([A, B]);
 
-assert!(a_or_b.allows(a));
-assert!(!a_or_b.allows(c));
+assert!(a_or_b.allows(&a));
+assert!(!a_or_b.allows(&c));
 ```
 
 Tag filters may be combined which each other to create complex expressions:
 
 ```rust
-use moonshine_tag::prelude::*;
+use moonshine_tag::{prelude::*, Filter, filter};
 
 tags! { A, B, C, D }
 
@@ -111,24 +111,26 @@ let ab = Tags::from([A, B]);
 let cd = Tags::from([C, D]);
 let c = Tags::from(C);
 
-let filter = ([A, B] | C) & D;
+let filter = (Filter::all_of([A, B]) | Filter::any_of([C, B])) & Filter::any_of(D);
 
-assert!(!filter.allows(ab));
-assert!(!filter.allows(c));
-assert!(filter.allows(cd));
+assert!(!filter.allows(&ab));
+assert!(!filter.allows(&c));
+assert!(filter.allows(&cd));
 ```
 
 There is also a convenient `filter!` macro for constructing tag filters from tag expressions:
 
 ```rust
-use moonshine_tag::prelude::{*, self as tag};
+use moonshine_tag::{prelude::*, Filter, filter};
 
 tags! { A, B, C, D }
 
-let _: tag::Filter = tag::filter!([A, B, ..]);       // Matches any tag set containing A or B
-let _: tag::Filter = tag::filter!([A, B, ..] | [C]); // Matches any tag set which contains A or B, or exactly C
-let _: tag::Filter = tag::filter!([A, B] & ![C]);    // Matches any tag set containing A or B but not C
+let _: Filter = filter!([A, B, ..]);       // Matches any tag set containing A or B
+let _: Filter = filter!([A, B, ..] | [C]); // Matches any tag set which contains A or B, or exactly C
+let _: Filter = filter!(![C]);             // Matches any tag set not containing C
 ```
+
+⚠️ This macro is still in development.
 
 ## Limitations and Guidelines
 

@@ -183,7 +183,7 @@ impl Tags {
     ///
     /// ```
     /// use bevy::prelude::*;
-    /// use moonshine_tag::{prelude::*};
+    /// use moonshine_tag::prelude::*;
     ///
     /// let mut world = World::new();
     ///
@@ -323,8 +323,8 @@ impl IntoIterator for Tags {
 ///
 /// # Examples
 /// ```
-/// # use bevy::prelude::*;
-/// # use moonshine_tag::prelude::*;
+/// use bevy::prelude::*;
+/// use moonshine_tag::prelude::*;
 ///
 /// tags! { A, B, C };
 ///
@@ -377,11 +377,11 @@ where
 /// tags! { A, B, C };
 ///
 /// #[derive(Component)]
-/// #[require(ComponentTags<Self>(|| A))]
+/// #[require(ComponentTags<Self> = A)]
 /// struct Foo;
 ///
 /// #[derive(Component)]
-/// #[require(ComponentTags<Self>(|| [B, C]))]
+/// #[require(ComponentTags<Self> = [B, C])]
 /// struct Bar;
 ///
 /// let mut world = World::new();
