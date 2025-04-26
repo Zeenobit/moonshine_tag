@@ -1,7 +1,13 @@
+#![doc = include_str!("../README.md")]
+#![warn(missing_docs)]
+
 pub mod prelude {
+    //! Prelude module to import the most essential types and traits.
+
     pub use crate::{tags, ComponentTags, Tag, TagPlugin, Tags, WithTags};
 
     #[deprecated(since = "0.1.1", note = "import `Filter` explicitly")]
+    #[doc(hidden)]
     pub type TagFilter = crate::Filter;
 
     #[allow(deprecated)]
@@ -448,6 +454,7 @@ impl GetEntityTags for EntityWorldMut<'_> {
 }
 
 #[deprecated(since = "0.1.1", note = "use standard `Into` instead")]
+#[doc(hidden)]
 pub trait IntoTags {
     fn into_tags(self) -> Tags;
 }

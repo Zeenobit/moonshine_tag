@@ -52,22 +52,27 @@ pub enum Filter {
 }
 
 impl Filter {
+    /// Creates a new filter which does not match any tags.
     pub fn none() -> Filter {
         Self::Equal([].into())
     }
 
+    /// Creates a new filter which matches only an exact set of tags.
     pub fn equal(tags: impl Into<Tags>) -> Filter {
         Self::Equal(tags.into())
     }
 
+    /// Creates a new filter which matches any set of tags.
     pub fn any() -> Filter {
         Self::AllOf([].into())
     }
 
+    /// Creates a new filter which matches any set of tags which contains all of the given tags.
     pub fn all_of(tags: impl Into<Tags>) -> Filter {
         Self::AllOf(tags.into())
     }
 
+    /// Creates a new filter which matches any set of tags which contains any of the given tags.
     pub fn any_of(tags: impl Into<Tags>) -> Filter {
         Self::AnyOf(tags.into())
     }
