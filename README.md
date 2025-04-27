@@ -14,7 +14,7 @@ A [`Tag`] represents a cheap, generic, somewhat unique identifier which may be u
 
 ```rust
 use bevy::prelude::*;
-use moonshine_tag::{prelude::*, self as tag};
+use moonshine_tag::{prelude::*, filter, Filter};
 
 tags! { APPLE, ORANGE, JUICY, CRUNCHY, POISONED }
 
@@ -28,7 +28,7 @@ let fruits = [
 ];
 
 // Only crunchy, edible apples, please! :)
-let filter: tag::Filter = tag::filter!([APPLE, CRUNCHY]) & tag::filter!(![POISONED]);
+let filter: Filter = filter!([APPLE, CRUNCHY]) & filter!(![POISONED]);
 
 for fruit in &fruits {
     if filter.allows(fruit) {
