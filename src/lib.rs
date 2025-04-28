@@ -5,13 +5,6 @@ pub mod prelude {
     //! Prelude module to import the most essential types and traits.
 
     pub use crate::{tags, ComponentTags, Tag, TagPlugin, Tags, WithTags};
-
-    #[deprecated(since = "0.1.1", note = "import `Filter` explicitly")]
-    #[doc(hidden)]
-    pub type TagFilter = crate::Filter;
-
-    #[allow(deprecated)]
-    pub use crate::{GetEntityTags, GetTags, IntoTags}; // TODO: Remove
 }
 
 mod filter;
@@ -412,57 +405,6 @@ impl<T: Component> ComponentTags<T> {
 impl<T: Component, I: Into<Tags>> From<I> for ComponentTags<T> {
     fn from(tags: I) -> Self {
         Self(tags.into(), PhantomData)
-    }
-}
-
-/// An extension trait to get [`Entity`] tags from a [`World`].
-pub trait GetTags {
-    /// Returns the tags associated with this entity, if any, or the empty set.
-    #[deprecated(since = "0.1.1", note = "use `.unwrap_or(Tags::empty())` instead")]
-    fn tags(&self, entity: Entity) -> &Tags;
-}
-
-impl GetTags for World {
-    fn tags(&self, entity: Entity) -> &Tags {
-        self.get(entity).unwrap_or(Tags::empty())
-    }
-}
-
-/// An extension trait to get tags from an [`EntityRef`], [`EntityMut`], or [`EntityWorldMut`].
-pub trait GetEntityTags {
-    /// Returns the tags associated with this entity, if any, or the empty set.
-    #[deprecated(since = "0.1.1", note = "use `.unwrap_or(Tags::empty())` instead")]
-    fn tags(&self) -> &Tags;
-}
-
-impl GetEntityTags for EntityRef<'_> {
-    fn tags(&self) -> &Tags {
-        self.get().unwrap_or(Tags::empty())
-    }
-}
-
-impl GetEntityTags for EntityMut<'_> {
-    fn tags(&self) -> &Tags {
-        self.get().unwrap_or(Tags::empty())
-    }
-}
-
-impl GetEntityTags for EntityWorldMut<'_> {
-    fn tags(&self) -> &Tags {
-        self.get().unwrap_or(Tags::empty())
-    }
-}
-
-#[deprecated(since = "0.1.1", note = "use standard `Into` instead")]
-#[doc(hidden)]
-pub trait IntoTags {
-    fn into_tags(self) -> Tags;
-}
-
-#[allow(deprecated)]
-impl<T: Into<Tags>> IntoTags for T {
-    fn into_tags(self) -> Tags {
-        self.into()
     }
 }
 
