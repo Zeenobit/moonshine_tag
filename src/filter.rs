@@ -1,3 +1,4 @@
+use std::ops::{BitAndAssign, BitOrAssign};
 use std::{
     any::Any,
     ops::{BitAnd, BitOr, Not},
@@ -111,11 +112,25 @@ impl<T: Into<Filter>> BitAnd<T> for Filter {
     }
 }
 
+impl<T: Into<Filter>> BitAndAssign<T> for Filter {
+    fn bitand_assign(&mut self, rhs: T) {
+        // TODO: Can this be optimized to avoid cloning?
+        *self = self.clone() & rhs;
+    }
+}
+
 impl<T: Into<Filter>> BitOr<T> for Filter {
     type Output = Self;
 
     fn bitor(self, rhs: T) -> Self::Output {
         Self::Or(Box::new(self), Box::new(rhs.into()))
+    }
+}
+
+impl<T: Into<Filter>> BitOrAssign<T> for Filter {
+    fn bitor_assign(&mut self, rhs: T) {
+        // TODO: Can this be optimized to avoid cloning?
+        *self = self.clone() | rhs;
     }
 }
 
