@@ -8,13 +8,15 @@
 
 Cheap, fast, mostly unique identifiers designed for [Bevy](https://github.com/bevyengine/bevy).
 
+This crate is also included as part of [🍸 Moonshine Core](https://github.com/Zeenobit/moonshine_core).
+
 ## Overview
 
 A [`Tag`] represents a cheap, generic, somewhat unique identifier which may be used to associate "things" with each other or to dynamically flag entities.
 
 ```rust
 use bevy::prelude::*;
-use moonshine_tag::{prelude::*, filter, Filter};
+use moonshine_tag::prelude::*;
 
 tags! { APPLE, ORANGE, JUICY, CRUNCHY, POISONED }
 
@@ -28,7 +30,7 @@ let fruits = [
 ];
 
 // Only crunchy, edible apples, please! :)
-let filter: Filter = filter!([APPLE, CRUNCHY]) & filter!(![POISONED]);
+let filter: TagFilter = tag_filter!([APPLE, CRUNCHY] & ![POISONED]);
 
 for fruit in &fruits {
     if filter.allows(fruit) {
@@ -87,14 +89,14 @@ let ac = a.union(c);
 A tag [`Filter`] is used to test if a given [`Tags`] set matches a certain pattern:
 
 ```rust
-use moonshine_tag::{prelude::*, Filter, filter};
+use moonshine_tag::prelude::*;
 
 tags! { A, B, C }
 
 let a = Tags::from(A);
 let c = Tags::from(C);
 
-let a_or_b: Filter = Filter::any_of([A, B]);
+let a_or_b: TagFilter = TagFilter::any_of([A, B]);
 
 assert!(a_or_b.allows(&a));
 assert!(!a_or_b.allows(&c));
@@ -103,7 +105,7 @@ assert!(!a_or_b.allows(&c));
 Tag filters may be combined which each other to create complex expressions:
 
 ```rust
-use moonshine_tag::{prelude::*, Filter, filter};
+use moonshine_tag::prelude::*;
 
 tags! { A, B, C, D }
 
@@ -111,7 +113,7 @@ let ab = Tags::from([A, B]);
 let cd = Tags::from([C, D]);
 let c = Tags::from(C);
 
-let filter = (Filter::all_of([A, B]) | Filter::any_of([C, B])) & Filter::any_of(D);
+let filter = (TagFilter::all_of([A, B]) | TagFilter::any_of([C, B])) & TagFilter::any_of(D);
 
 assert!(!filter.allows(&ab));
 assert!(!filter.allows(&c));
@@ -121,13 +123,13 @@ assert!(filter.allows(&cd));
 There is also a convenient `filter!` macro for constructing tag filters from tag expressions:
 
 ```rust
-use moonshine_tag::{prelude::*, Filter, filter};
+use moonshine_tag::prelude::*;
 
 tags! { A, B, C, D }
 
-let _: Filter = filter!([A, B, ..]);       // Matches any tag set containing A or B
-let _: Filter = filter!([A, B, ..] | [C]); // Matches any tag set which contains A or B, or exactly C
-let _: Filter = filter!(![C]);             // Matches any tag set not containing C
+let _: TagFilter = tag_filter!([A, B, ..]);       // Matches any tag set containing A or B
+let _: TagFilter = tag_filter!([A, B, ..] | [C]); // Matches any tag set which contains A or B, or exactly C
+let _: TagFilter = tag_filter!(![C]);             // Matches any tag set not containing C
 ```
 
 ⚠️ This macro is still in development.
@@ -143,17 +145,6 @@ In most applications, the chance of collision between two different tags within 
 However, you should **NOT** use tags for any cryptographic purposes, or as globally unique identifiers.
 
 Instead, prefer to use them for convenient, dynamic pattern matching or flagging "things" within your systems, especially entities.
-
-## Installation
-
-Add the following to your `Cargo.toml`:
-
-```toml
-[dependencies]
-moonshine-tag = "0.2.0"
-```
-
-This crate is also included as part of [🍸 Moonshine Core](https://github.com/Zeenobit/moonshine_core).
 
 ## Support
 

@@ -4,7 +4,7 @@
 pub mod prelude {
     //! Prelude module to import the most essential types and traits.
 
-    pub use crate::{tags, ComponentTags, Tag, TagPlugin, Tags, WithTags};
+    pub use crate::{tag_filter, tags, ComponentTags, Tag, TagFilter, TagPlugin, Tags, WithTags};
 }
 
 mod filter;
@@ -34,10 +34,10 @@ impl Plugin for TagPlugin {
             .register_type::<HashSet<Tag>>()
             .register_type_data::<HashSet<Tag>, ReflectSerialize>()
             .register_type_data::<HashSet<Tag>, ReflectDeserialize>()
-            .register_type::<Filter>()
-            .register_type::<Box<Filter>>()
-            .register_type_data::<Box<Filter>, ReflectSerialize>()
-            .register_type_data::<Box<Filter>, ReflectDeserialize>();
+            .register_type::<TagFilter>()
+            .register_type::<Box<TagFilter>>()
+            .register_type_data::<Box<TagFilter>, ReflectSerialize>()
+            .register_type_data::<Box<TagFilter>, ReflectDeserialize>();
     }
 }
 
@@ -146,7 +146,7 @@ impl IntoIterator for Tag {
 ///
 /// tags! { A, B };
 ///
-/// let tags: Tags = [A, B].into_tags();
+/// let tags: Tags = [A, B].into();
 ///
 /// assert_eq!(tags, [B, A]);
 /// ```
@@ -160,8 +160,8 @@ impl IntoIterator for Tag {
 /// tags! { A, B };
 ///
 /// let mut world = World::new();
-/// let entity = world.spawn([A, B].into_tags()).id();
-/// assert_eq!(*world.tags(entity), [A, B]);
+/// let entity = world.spawn(Tags::from([A, B])).id();
+/// assert_eq!(world.get::<Tags>(entity).unwrap(), [A, B]);
 /// ```
 #[derive(Component, Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Reflect)]
 #[reflect(Component)]
@@ -420,65 +420,65 @@ mod tests {
         assert_ne!(A, B);
     }
 
-    pub fn matches(tags: impl Into<Tags>, filter: &Filter) -> bool {
+    pub fn matches(tags: impl Into<Tags>, filter: &TagFilter) -> bool {
         filter.allows(&tags.into())
     }
 
     #[test]
     fn match_empty() {
-        assert!(matches([], &filter!([])));
-        assert!(matches([], &filter!([..])));
-        assert!(matches([], &filter!([..] | [])));
-        assert!(matches([], &filter!([..] & [])));
+        assert!(matches([], &tag_filter!([])));
+        assert!(matches([], &tag_filter!([..])));
+        assert!(matches([], &tag_filter!([..] | [])));
+        assert!(matches([], &tag_filter!([..] & [])));
 
-        assert!(!matches([], &filter!(![])));
-        assert!(!matches([], &filter!([A])));
-        assert!(!matches([], &filter!([A, ..])));
-        assert!(!matches([], &filter!([A, B])));
-        assert!(!matches([], &filter!([A | B])));
+        assert!(!matches([], &tag_filter!(![])));
+        assert!(!matches([], &tag_filter!([A])));
+        assert!(!matches([], &tag_filter!([A, ..])));
+        assert!(!matches([], &tag_filter!([A, B])));
+        assert!(!matches([], &tag_filter!([A | B])));
     }
 
     #[test]
     fn match_tag() {
-        assert!(matches(A, &filter!([..])));
-        assert!(matches(A, &filter!([..] | [])));
-        assert!(matches(A, &filter!(![])));
-        assert!(matches(A, &filter!([A])));
-        assert!(matches(A, &filter!([A | B])));
-        assert!(matches(A, &filter!([B | A])));
-        assert!(matches(A, &filter!(![B])));
-        assert!(matches(A, &filter!([A, ..])));
-        assert!(matches(A, &filter!([A, ..] | [B])));
+        assert!(matches(A, &tag_filter!([..])));
+        assert!(matches(A, &tag_filter!([..] | [])));
+        assert!(matches(A, &tag_filter!(![])));
+        assert!(matches(A, &tag_filter!([A])));
+        assert!(matches(A, &tag_filter!([A | B])));
+        assert!(matches(A, &tag_filter!([B | A])));
+        assert!(matches(A, &tag_filter!(![B])));
+        assert!(matches(A, &tag_filter!([A, ..])));
+        assert!(matches(A, &tag_filter!([A, ..] | [B])));
 
-        assert!(!matches(A, &filter!([])));
-        assert!(!matches(A, &filter!(![A])));
-        assert!(!matches(A, &filter!([B])));
-        assert!(!matches(A, &filter!([A, B, ..])));
-        assert!(!matches(A, &filter!([B, A, ..])));
-        assert!(!matches(A, &filter!([B | C])));
-        assert!(!matches(A, &filter!([B, C, ..])));
+        assert!(!matches(A, &tag_filter!([])));
+        assert!(!matches(A, &tag_filter!(![A])));
+        assert!(!matches(A, &tag_filter!([B])));
+        assert!(!matches(A, &tag_filter!([A, B, ..])));
+        assert!(!matches(A, &tag_filter!([B, A, ..])));
+        assert!(!matches(A, &tag_filter!([B | C])));
+        assert!(!matches(A, &tag_filter!([B, C, ..])));
     }
 
     #[test]
     fn match_tags() {
-        assert!(matches([A, B], &filter!([..])));
-        assert!(matches([A, B], &filter!([..] | [])));
-        assert!(matches([A, B], &filter!(![])));
-        assert!(matches([A, B], &filter!([A, B])));
-        assert!(matches([A, B], &filter!([B, A])));
-        assert!(matches([A, B], &filter!([A, ..])));
-        assert!(matches([A, B], &filter!([A, B, ..])));
-        assert!(matches([A, B], &filter!([A, B, ..] | [B, C])));
+        assert!(matches([A, B], &tag_filter!([..])));
+        assert!(matches([A, B], &tag_filter!([..] | [])));
+        assert!(matches([A, B], &tag_filter!(![])));
+        assert!(matches([A, B], &tag_filter!([A, B])));
+        assert!(matches([A, B], &tag_filter!([B, A])));
+        assert!(matches([A, B], &tag_filter!([A, ..])));
+        assert!(matches([A, B], &tag_filter!([A, B, ..])));
+        assert!(matches([A, B], &tag_filter!([A, B, ..] | [B, C])));
 
-        assert!(!matches([A, B], &filter!([])));
-        assert!(!matches([A, B], &filter!([A])));
-        assert!(!matches([A, B], &filter!([A, B, C])));
-        assert!(!matches([A, B], &filter!(![A, B])));
-        assert!(!matches([A, B], &filter!([A, C])));
-        assert!(!matches([A, B], &filter!([A, C, ..])));
-        assert!(!matches([A, B], &filter!([A, B, C, ..])));
-        assert!(!matches([A, B], &filter!([A, C, ..] | [B, C])));
-        assert!(!matches([A, B], &filter!([C, ..])));
+        assert!(!matches([A, B], &tag_filter!([])));
+        assert!(!matches([A, B], &tag_filter!([A])));
+        assert!(!matches([A, B], &tag_filter!([A, B, C])));
+        assert!(!matches([A, B], &tag_filter!(![A, B])));
+        assert!(!matches([A, B], &tag_filter!([A, C])));
+        assert!(!matches([A, B], &tag_filter!([A, C, ..])));
+        assert!(!matches([A, B], &tag_filter!([A, B, C, ..])));
+        assert!(!matches([A, B], &tag_filter!([A, C, ..] | [B, C])));
+        assert!(!matches([A, B], &tag_filter!([C, ..])));
     }
 
     #[test]
