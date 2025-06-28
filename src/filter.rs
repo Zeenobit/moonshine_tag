@@ -300,6 +300,23 @@ macro_rules! tag_filter {
     ([$($tags:ident),* $(,)? ..]) => {
         $crate::TagFilter::all_of([$($tags),*])
     };
+
+    ($head:tt & ($($tail:tt)+)) => {
+        $crate::tag_filter!($head) & ($crate::tag_filter!($($tail)+))
+    };
+    ($head:tt | ($($tail:tt)+)) => {
+        $crate::tag_filter!($head) | ($crate::tag_filter!($($tail)+))
+    };
+    (($($head:tt)+) & $($tail:tt)+) => {
+        ($crate::tag_filter!($($head)+)) & $crate::tag_filter!($($tail)+)
+    };
+    (($($head:tt)+) | $($tail:tt)+) => {
+       ($crate::tag_filter!($($head)+)) | $crate::tag_filter!($($tail)+)
+    };
+    (!($($head:tt)+)) => {
+        !($crate::tag_filter!($($head)+))
+    };
+
     ($first:tt & $($rest:tt)+) => {
         $crate::tag_filter!($first) & $crate::tag_filter!($($rest)+)
     };
@@ -373,13 +390,28 @@ fn test_filter_macro_expansion() {
     );
 
     assert_eq!(
-        tag_filter!([A, B] & [C, ..] | [A, ..]),
+        tag_filter!(([A, B] & [C, ..]) | [A, ..]),
+        (TagFilter::equal([A, B]) & TagFilter::all_of([C])) | TagFilter::all_of([A])
+    );
+
+    assert_eq!(
+        tag_filter!([A, B] & ([C, ..] | [A, ..])),
         TagFilter::equal([A, B]) & (TagFilter::all_of([C]) | TagFilter::all_of([A]))
     );
 
     assert_eq!(
         tag_filter!([A, B] | [C, ..] & [A, ..]),
         TagFilter::equal([A, B]) | TagFilter::all_of([C]) & TagFilter::all_of([A])
+    );
+
+    assert_eq!(
+        tag_filter!([A, B] | ([C, ..] & [A, ..])),
+        TagFilter::equal([A, B]) | (TagFilter::all_of([C]) & TagFilter::all_of([A]))
+    );
+
+    assert_eq!(
+        tag_filter!(([A, B] | [C, ..]) & [A, ..]),
+        (TagFilter::equal([A, B]) | TagFilter::all_of([C])) & TagFilter::all_of([A])
     );
 
     assert_eq!(
@@ -400,6 +432,16 @@ fn test_filter_macro_expansion() {
     assert_eq!(
         tag_filter!(![A, B] & [C, ..]),
         !TagFilter::equal([A, B]) & TagFilter::all_of([C])
+    );
+
+    assert_eq!(
+        tag_filter!((![A, B]) & [C, ..]),
+        (!TagFilter::equal([A, B])) & TagFilter::all_of([C])
+    );
+
+    assert_eq!(
+        tag_filter!(!([A, B] & [C, ..])),
+        !(TagFilter::equal([A, B]) & TagFilter::all_of([C]))
     );
 
     assert_eq!(
