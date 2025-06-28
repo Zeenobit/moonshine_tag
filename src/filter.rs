@@ -59,7 +59,7 @@ pub type Filter = TagFilter;
 impl TagFilter {
     /// Creates a new filter which does not match any tags.
     pub fn none() -> TagFilter {
-        Self::Equal([].into())
+        Self::Equal(Tags::default())
     }
 
     /// Creates a new filter which matches only an exact set of tags.
@@ -69,7 +69,7 @@ impl TagFilter {
 
     /// Creates a new filter which matches any set of tags.
     pub fn any() -> TagFilter {
-        Self::AllOf([].into())
+        Self::AllOf(Tags::default())
     }
 
     /// Creates a new filter which matches any set of tags which contains all of the given tags.
@@ -83,16 +83,12 @@ impl TagFilter {
     }
 
     /// Returns `true` if this filter allows the given set of tags.
+    #[deprecated(
+        since = "0.2.0",
+        note = "use `Tags::matches` and `Tag::matches` instead"
+    )]
     pub fn allows(&self, tags: &Tags) -> bool {
-        use TagFilter::*;
-        match self {
-            Equal(a) => a == tags,
-            AllOf(a) => a.is_subset(tags),
-            AnyOf(a) => !a.is_disjoint(tags),
-            And(a, b) => a.allows(tags) && b.allows(tags),
-            Or(a, b) => a.allows(tags) || b.allows(tags),
-            Not(a) => !a.allows(tags),
-        }
+        tags.matches(self)
     }
 }
 

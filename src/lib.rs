@@ -19,6 +19,7 @@ use bevy_ecs::prelude::*;
 use bevy_ecs::world::DeferredWorld;
 use bevy_platform::collections::HashSet;
 use bevy_reflect::prelude::*;
+use itertools::Itertools;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
@@ -106,6 +107,18 @@ impl Tag {
     /// Returns the hash value of this tag.
     pub const fn hash(&self) -> u64 {
         self.0
+    }
+
+    pub fn matches(&self, filter: &TagFilter) -> bool {
+        use TagFilter::*;
+        match filter {
+            Equal(a) => a.iter().exactly_one().is_ok_and(|tag| tag == *self),
+            AllOf(a) => a.is_empty() || a.iter().exactly_one().is_ok_and(|tag| tag == *self),
+            AnyOf(a) => a.contains(*self),
+            And(a, b) => self.matches(a) && self.matches(b),
+            Or(a, b) => self.matches(a) || self.matches(b),
+            Not(a) => !self.matches(a),
+        }
     }
 }
 
@@ -253,6 +266,18 @@ impl Tags {
     /// Returns `true` if the tags in another set are all present in this set.
     pub fn is_superset(&self, tags: &Tags) -> bool {
         self.0.is_superset(&tags.0)
+    }
+
+    pub fn matches(&self, filter: &TagFilter) -> bool {
+        use TagFilter::*;
+        match filter {
+            Equal(a) => a == self,
+            AllOf(a) => a.is_subset(self),
+            AnyOf(a) => !a.is_disjoint(self),
+            And(a, b) => self.matches(a) && self.matches(b),
+            Or(a, b) => self.matches(a) || self.matches(b),
+            Not(a) => !self.matches(a),
+        }
     }
 }
 
@@ -421,7 +446,7 @@ mod tests {
     }
 
     pub fn matches(tags: impl Into<Tags>, filter: &TagFilter) -> bool {
-        filter.allows(&tags.into())
+        tags.into().matches(filter)
     }
 
     #[test]
@@ -450,6 +475,16 @@ mod tests {
         assert!(matches(A, &tag_filter!([A, ..])));
         assert!(matches(A, &tag_filter!([A, ..] | [B])));
 
+        assert!(A.matches(&tag_filter!([..])));
+        assert!(A.matches(&tag_filter!([..] | [])));
+        assert!(A.matches(&tag_filter!(![])));
+        assert!(A.matches(&tag_filter!([A])));
+        assert!(A.matches(&tag_filter!([A | B])));
+        assert!(A.matches(&tag_filter!([B | A])));
+        assert!(A.matches(&tag_filter!(![B])));
+        assert!(A.matches(&tag_filter!([A, ..])));
+        assert!(A.matches(&tag_filter!([A, ..] | [B])));
+
         assert!(!matches(A, &tag_filter!([])));
         assert!(!matches(A, &tag_filter!(![A])));
         assert!(!matches(A, &tag_filter!([B])));
@@ -457,6 +492,14 @@ mod tests {
         assert!(!matches(A, &tag_filter!([B, A, ..])));
         assert!(!matches(A, &tag_filter!([B | C])));
         assert!(!matches(A, &tag_filter!([B, C, ..])));
+
+        assert!(!A.matches(&tag_filter!([])));
+        assert!(!A.matches(&tag_filter!(![A])));
+        assert!(!A.matches(&tag_filter!([B])));
+        assert!(!A.matches(&tag_filter!([A, B, ..])));
+        assert!(!A.matches(&tag_filter!([B, A, ..])));
+        assert!(!A.matches(&tag_filter!([B | C])));
+        assert!(!A.matches(&tag_filter!([B, C, ..])));
     }
 
     #[test]
