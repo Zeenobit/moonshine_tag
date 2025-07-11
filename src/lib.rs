@@ -9,6 +9,8 @@ pub mod prelude {
 
 mod filter;
 
+pub extern crate inventory;
+
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -50,11 +52,17 @@ macro_rules! tags {
     ($(#[$meta:meta])* $v:vis $name:ident $(,)?) => {
         $(#[$meta])*
         $v const $name: $crate::Tag = $crate::Tag::new(stringify!($name));
+        $crate::inventory::submit! {
+            $crate::TagMeta { tag: $name, name: stringify!($name) }
+        }
     };
 
     ($(#[$meta:meta])* $v0:vis $n0:ident, $($v:vis $n:ident),* $(,)?) => {
         $(#[$meta])*
         $v0 const $n0: $crate::Tag = $crate::Tag::new(stringify!($n0));
+        $crate::inventory::submit! {
+            $crate::TagMeta { tag: $n0, name: stringify!($n0) }
+        }
         $crate::tags!($($v $n),*);
     };
 }
@@ -120,6 +128,16 @@ impl Tag {
             Not(a) => !self.matches(a),
         }
     }
+
+    /// Resolves the name of this tag, if it has been defined using the `tags!` macro.
+    ///
+    /// Note that this function is very slow and should not be used in performance-critical code.
+    /// It is mainly designed for debugging and editor purposes.
+    pub fn resolve_name(&self) -> Option<&'static str> {
+        inventory::iter::<TagMeta>()
+            .find(|meta| meta.tag == *self)
+            .map(|meta| meta.name)
+    }
 }
 
 impl fmt::Debug for Tag {
@@ -149,6 +167,14 @@ impl IntoIterator for Tag {
         std::iter::once(self)
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Reflect)]
+pub struct TagMeta {
+    pub tag: Tag,
+    pub name: &'static str,
+}
+
+inventory::collect!(TagMeta);
 
 /// A collection of tags.
 ///
