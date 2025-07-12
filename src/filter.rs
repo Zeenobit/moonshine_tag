@@ -90,6 +90,17 @@ impl TagFilter {
     pub fn allows(&self, tags: &Tags) -> bool {
         tags.matches(self)
     }
+
+    pub fn to_pretty_string(&self) -> String {
+        match self {
+            Self::Equal(tags) => format!("=[{}]", tags.to_pretty_string()),
+            Self::AllOf(tags) => format!("[{}]", tags.to_pretty_string()),
+            Self::AnyOf(tags) => format!("[{}, ..]", tags.to_pretty_string()),
+            Self::And(a, b) => format!("({} & {})", a.to_pretty_string(), b.to_pretty_string()),
+            Self::Or(a, b) => format!("({} | {})", a.to_pretty_string(), b.to_pretty_string()),
+            Self::Not(inner_filter) => format!("![{}]", inner_filter.to_pretty_string()),
+        }
+    }
 }
 
 impl Default for TagFilter {

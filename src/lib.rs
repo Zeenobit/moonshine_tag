@@ -117,6 +117,10 @@ impl Tag {
         self.0
     }
 
+    pub fn pretty_hash(&self) -> String {
+        base31::encode(self.0)
+    }
+
     pub fn matches(&self, filter: &TagFilter) -> bool {
         use TagFilter::*;
         match filter {
@@ -304,6 +308,17 @@ impl Tags {
             Or(a, b) => self.matches(a) || self.matches(b),
             Not(a) => !self.matches(a),
         }
+    }
+
+    pub fn to_pretty_string(&self) -> String {
+        self.0
+            .iter()
+            .map(|tag| {
+                tag.resolve_name()
+                    .map(|name| name.to_string())
+                    .unwrap_or_else(|| tag.pretty_hash())
+            })
+            .join(", ")
     }
 }
 
