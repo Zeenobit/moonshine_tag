@@ -46,6 +46,7 @@ for fruit in &fruits {
 - Tags are cheap to create, cheap to copy, cheap to compare and "unique enough". It's *just* a `u64`.
 - Serialization support for both tags and tag filters
 - Ability to define complex tag filter expressions
+- Reverse lookup of tag names without any manual regitration
 - Simple implementation with no boilerplate and no procedural macros 🧘
 
 ## Usage
@@ -134,6 +135,20 @@ let _: TagFilter = tag_filter!(![C]);             // Matches any tag set not con
 
 ⚠️ This macro is still in development.
 
+## Tag Names
+
+When debugging or implementing tools, it is often useful to have some human-friendly representation of tags.
+
+There are two methods provided to for human-friendly identification of tags:
+- [`pretty_hash`]
+    - This returns a base31-encoded string representation of the tag's hash value.
+    - This is generally fast and suitable for most use cases.
+- [`resolve_name`]
+    - This returns the actual name of the tag.
+    - This is slow as it performs a linear search through all defined tags.
+        - If performance is a concern, consider using [`pretty_hash`] or cache the names in memory.
+    - The tag must be defined using the [`tags!`] macro for this to work, otherwise [`pretty_hash`] is returned as fallback.
+
 ## Limitations and Guidelines
 
 Internally, tags are just an [FNV-1a](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) ([Why?](https://softwareengineering.stackexchange.com/a/145633)) hash of their string representation. This makes them very cheap to use, but this means they are **NOT** guaranteed to be unique.
@@ -154,6 +169,9 @@ You may also contact me on the official [Bevy Discord](https://discord.gg/bevy) 
 
 
 [`Tag`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html
+[`resolve_name`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html#method.resoleve_name
+[`pretty_hash`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html#method.pretty_hash
+[`tags!`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/macro.tags.html
 [`Tags`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tags.html
 [`Filter`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Filter.html
 [`Component`]:https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html
