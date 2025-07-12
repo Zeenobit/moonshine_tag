@@ -117,10 +117,16 @@ impl Tag {
         self.0
     }
 
+    /// Returns a human-friendly representation of this tag's hash.
+    ///
+    /// This is a [base31](https://github.com/kmanley/base31)-encoded string representation of the tag's hash value.
+    ///
+    /// This is, in theory, faster than [`resolve_name`](Tag::resolve_name) for human-friendly identification.
     pub fn pretty_hash(&self) -> String {
         base31::encode(self.0)
     }
 
+    /// Returns `true` if this tag matches the given filter.
     pub fn matches(&self, filter: &TagFilter) -> bool {
         use TagFilter::*;
         match filter {
@@ -172,6 +178,7 @@ impl IntoIterator for Tag {
     }
 }
 
+#[doc(hidden)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Reflect)]
 pub struct TagMeta {
     pub tag: Tag,
@@ -298,6 +305,7 @@ impl Tags {
         self.0.is_superset(&tags.0)
     }
 
+    /// Returns `true` if this set matches the given filter.
     pub fn matches(&self, filter: &TagFilter) -> bool {
         use TagFilter::*;
         match filter {
@@ -310,6 +318,10 @@ impl Tags {
         }
     }
 
+    /// Returns a string representation of this set of tags.
+    ///
+    /// Note that this function is slow and should not be used in performance-critical code.
+    /// It is mainly designed for debugging and editor purposes.
     pub fn to_pretty_string(&self) -> String {
         self.0
             .iter()

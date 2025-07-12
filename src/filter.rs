@@ -91,6 +91,10 @@ impl TagFilter {
         tags.matches(self)
     }
 
+    /// Returns a string representation of this filter.
+    ///
+    /// Note that this function is slow and should not be used in performance-critical code.
+    /// It is mainly designed for debugging and editor purposes.
     pub fn to_pretty_string(&self) -> String {
         match self {
             Self::Equal(tags) => format!("=[{}]", tags.to_pretty_string()),
