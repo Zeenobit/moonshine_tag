@@ -121,12 +121,12 @@ impl Tag {
     ///
     /// This is a [base31](https://github.com/kmanley/base31)-encoded string representation of the tag's hash value.
     ///
-    /// This is, in theory, faster than [`resolve_name`](Tag::resolve_name) for human-friendly identification.
+    /// This is, on average, faster than [`resolve_name`](Tag::resolve_name) for human-friendly identification.
     pub fn pretty_hash(&self) -> String {
         base31::encode(self.0)
     }
 
-    /// Returns `true` if this tag matches the given filter.
+    /// Returns `true` if this tag matches the given [`TagFilter`].
     pub fn matches(&self, filter: &TagFilter) -> bool {
         use TagFilter::*;
         match filter {
@@ -142,11 +142,23 @@ impl Tag {
     /// Resolves the name of this tag, if it has been defined using the `tags!` macro.
     ///
     /// Note that this function is very slow and should not be used in performance-critical code.
-    /// It is mainly designed for debugging and editor purposes.
+    /// It performs a linear search over all registered tags to find a match and it is mainly designed for debugging and editor purposes.
+    ///
+    /// If performance is a concern, consider using [`pretty_hash`](Tag::pretty_hash) or cache the result of this function.
+    /// See [`iter_names`](Tag::iter_names) for an iterator over all registered tag names.
+    ///
+    /// Tags must be defined using the [`tags!`] macro to be registered.
     pub fn resolve_name(&self) -> Option<&'static str> {
-        inventory::iter::<TagMeta>()
+        TagMeta::iter()
             .find(|meta| meta.tag == *self)
             .map(|meta| meta.name)
+    }
+
+    /// Returns an iterator over all registered tag names.
+    ///
+    /// Tags must be defined using the [`tags!`] macro to be registered.
+    pub fn iter_names() -> impl Iterator<Item = &'static str> {
+        TagMeta::iter().map(|meta| meta.name)
     }
 }
 
@@ -178,11 +190,20 @@ impl IntoIterator for Tag {
     }
 }
 
-#[doc(hidden)]
+/// The metadata associated with a [`Tag`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Reflect)]
 pub struct TagMeta {
+    /// The tag itself.
     pub tag: Tag,
+    /// The name of the tag.
     pub name: &'static str,
+}
+
+impl TagMeta {
+    /// Iterates over all registered tag metadata.
+    pub fn iter() -> impl Iterator<Item = &'static TagMeta> {
+        inventory::iter::<TagMeta>()
+    }
 }
 
 inventory::collect!(TagMeta);
