@@ -139,7 +139,7 @@ impl Tag {
         }
     }
 
-    /// Resolves the name of this tag, if it has been defined using the `tags!` macro.
+    /// Resolves the name of this tag if it has been defined using the `tags!` macro.
     ///
     /// Note that this function is very slow and should not be used in performance-critical code.
     /// It performs a linear search over all registered tags to find a match and it is mainly designed for debugging and editor purposes.
@@ -152,6 +152,21 @@ impl Tag {
         TagMeta::iter()
             .find(|meta| meta.tag == *self)
             .map(|meta| meta.name)
+    }
+
+    /// Returns the name of this tag if it has been defined using the `tags!` macro.
+    /// Otherwise, it returns the [`pretty_hash`](Tag::pretty_hash) as a fallback.
+    ///
+    /// Use this when you just want to display the most human-friendly format of the tag and
+    /// do not care for handling any errors due to unregistered tags.
+    ///
+    /// See:
+    /// - [`Tag::resolve_name`]
+    /// - [`Tag::pretty_hash`]
+    pub fn pretty_name(&self) -> String {
+        self.resolve_name()
+            .map(|name| name.to_owned())
+            .unwrap_or_else(|| self.pretty_hash())
     }
 
     /// Returns an iterator over all registered tag names.
