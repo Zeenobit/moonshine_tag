@@ -9,6 +9,7 @@ use bevy_reflect::{
     ReflectCloneError, ReflectMut, ReflectOwned, ReflectRef, TypeInfo, TypePath, TypeRegistration,
     Typed,
 };
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 use crate::Tags;
@@ -57,6 +58,16 @@ pub enum TagFilter {
 pub type Filter = TagFilter;
 
 impl TagFilter {
+    pub fn static_any() -> &'static TagFilter {
+        static ANY: Lazy<TagFilter> = Lazy::new(TagFilter::any);
+        &ANY
+    }
+
+    pub fn static_none() -> &'static TagFilter {
+        static NONE: Lazy<TagFilter> = Lazy::new(TagFilter::none);
+        &NONE
+    }
+
     /// Creates a new filter which does not match any tags.
     pub fn none() -> TagFilter {
         Self::Equal(Tags::default())

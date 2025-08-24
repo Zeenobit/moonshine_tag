@@ -274,9 +274,14 @@ impl Tags {
     ///
     /// assert!(tags.is_empty());
     /// ```
-    pub fn empty() -> &'static Tags {
+    pub fn static_empty() -> &'static Tags {
         static EMPTY: Lazy<Tags> = Lazy::new(Tags::new);
         &EMPTY
+    }
+
+    #[deprecated(since = "0.3.0", note = "use `static_empty` instead")]
+    pub fn empty() -> &'static Tags {
+        Self::static_empty()
     }
 
     /// Creates a new empty set of tags.
