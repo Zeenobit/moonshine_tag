@@ -203,11 +203,11 @@ impl PartialReflect for Box<TagFilter> {
         (**self).try_apply(value)
     }
 
-    fn reflect_ref(&self) -> ReflectRef {
+    fn reflect_ref(&'_ self) -> ReflectRef<'_> {
         (**self).reflect_ref()
     }
 
-    fn reflect_mut(&mut self) -> ReflectMut {
+    fn reflect_mut(&'_ mut self) -> ReflectMut<'_> {
         (**self).reflect_mut()
     }
 

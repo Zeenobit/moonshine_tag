@@ -626,7 +626,7 @@ mod tests {
             .id();
         world.flush();
         assert_eq!(
-            world.get::<Tags>(entity).unwrap_or(Tags::empty()),
+            world.get::<Tags>(entity).unwrap_or(Tags::static_empty()),
             [A, B, C]
         );
     }
@@ -639,7 +639,7 @@ mod tests {
             .id();
         world.flush();
         assert_eq!(
-            world.get::<Tags>(entity).unwrap_or(Tags::empty()),
+            world.get::<Tags>(entity).unwrap_or(Tags::static_empty()),
             [A, B, C]
         );
     }
