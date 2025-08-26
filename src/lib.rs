@@ -63,7 +63,7 @@ macro_rules! tags {
         $crate::inventory::submit! {
             $crate::TagMeta { tag: $n0, name: stringify!($n0) }
         }
-        $crate::tags!($($v $n),*);
+        $crate::tags!($(#[$meta])* $($v $n),*);
     };
 }
 
@@ -642,5 +642,38 @@ mod tests {
             world.get::<Tags>(entity).unwrap_or(Tags::static_empty()),
             [A, B, C]
         );
+    }
+
+    #[test]
+    fn tags_macro_usage() {
+        tags! {
+            pub N00,
+        }
+        tags! {
+            pub N01,
+            N02,
+        }
+        tags! {
+            pub N03,
+            pub N04,
+        }
+        tags! {
+            #[allow(non_upper_case_globals)]
+            pub n05,
+        }
+        tags! {
+            #[allow(non_upper_case_globals)]
+            n06,
+        }
+        tags! {
+            #[allow(non_upper_case_globals)] // Meta applies to all entries
+            n07,
+            n08,
+        }
+        tags! {
+            #[allow(non_upper_case_globals)]
+            pub n09,
+            n10,
+        }
     }
 }
