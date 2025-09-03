@@ -317,6 +317,16 @@ impl GetTypeRegistration for Box<TagFilter> {
 /// ```
 #[macro_export]
 macro_rules! tag_filter {
+    [$($tags:ident),* $(,)?] => {
+        $crate::TagFilter::equal([$($tags),*])
+    };
+    [$($tags:ident)|* $(|)?] => {
+        $crate::TagFilter::any_of([$($tags),*])
+    };
+    [$($tags:ident),* $(,)? ..] => {
+        $crate::TagFilter::all_of([$($tags),*])
+    };
+
     ([$($tags:ident),* $(,)?]) => {
         $crate::TagFilter::equal([$($tags),*])
     };
