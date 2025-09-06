@@ -315,6 +315,11 @@ impl Tags {
         self.0.remove(&tag)
     }
 
+    /// See [`HashSet::retain`].
+    pub fn retain(&mut self, f: impl FnMut(&Tag) -> bool) {
+        self.0.retain(f)
+    }
+
     /// Returns an iterator over the tags in this set.
     pub fn iter(&self) -> impl Iterator<Item = Tag> + '_ {
         self.0.iter().copied()
