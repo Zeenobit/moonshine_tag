@@ -11,6 +11,7 @@ mod filter;
 
 pub extern crate inventory;
 
+use std::borrow::Cow;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -19,7 +20,7 @@ use bevy_app::{App, Plugin};
 use bevy_ecs::component::HookContext;
 use bevy_ecs::prelude::*;
 use bevy_ecs::world::DeferredWorld;
-use bevy_platform::collections::HashSet;
+use bevy_platform::collections::{HashMap, HashSet};
 use bevy_reflect::prelude::*;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
@@ -32,7 +33,8 @@ pub struct TagPlugin;
 
 impl Plugin for TagPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Tag>()
+        app.init_resource::<TagNames>()
+            .register_type::<Tag>()
             .register_type::<Tags>()
             .register_type::<HashSet<Tag>>()
             .register_type_data::<HashSet<Tag>, ReflectSerialize>()
@@ -163,10 +165,10 @@ impl Tag {
     /// See:
     /// - [`Tag::resolve_name`]
     /// - [`Tag::pretty_hash`]
-    pub fn pretty_name(&self) -> String {
+    pub fn pretty_name(&self) -> Cow<'static, str> {
         self.resolve_name()
-            .map(|name| name.to_owned())
-            .unwrap_or_else(|| self.pretty_hash())
+            .map(|name| name.into())
+            .unwrap_or_else(|| self.pretty_hash().into())
     }
 
     /// Returns an iterator over all registered tag names.
@@ -222,6 +224,67 @@ impl TagMeta {
 }
 
 inventory::collect!(TagMeta);
+
+/// A [`Resource`] which may be used to cache [`Tag`] names.
+///
+/// # Usage
+///
+/// When managing tags, it is often required to represent a [`Tag`] in a human-friendly way.
+/// While [`Tag::pretty_name`] exists, it is not cheap to use because it requires a linear search
+/// over all registered tags.
+///
+/// This is fine for small projects, but this method does not scale well as the numebr of tags increases.
+///
+/// One solution around this problem is to cache the tag names.
+#[derive(Resource, Default)]
+pub struct TagNames(HashMap<Tag, Cow<'static, str>>);
+
+impl TagNames {
+    /// Creates a new [`TagNames`] and preloads it with all existing tag names.
+    ///
+    /// The cost of this function increases linearly relative to the number of tags in your project.
+    /// This function is useful if you are willing to spend the initial cost of caching all tag names to
+    /// ensure no cache misses during lookup.
+    ///
+    /// # Example
+    /// ```rust
+    /// use bevy::prelude::*;
+    /// use moonshine_tag::{prelude::*, TagNames};
+    ///
+    /// let mut app = App::new();
+    ///
+    /// app.add_plugins((MinimalPlugins, TagPlugin));
+    /// app.insert_resource(TagNames::generate());
+    /// ```
+    pub fn generate() -> Self {
+        let mut inner = HashMap::new();
+        for &TagMeta { tag, name } in TagMeta::iter() {
+            inner.insert(tag, name.into());
+        }
+
+        Self(inner)
+    }
+
+    /// Returns the name of the given [`Tag`] and stores a copy of it to speed up future calls.
+    pub fn get(&mut self, tag: Tag) -> Cow<'static, str> {
+        self.0
+            .entry(tag)
+            .or_insert_with(|| tag.pretty_name())
+            .clone()
+    }
+
+    /// Returns the name of the given [`Tag`] if it exists in the cache.
+    pub fn get_cached(&self, tag: Tag) -> Option<Cow<'static, str>> {
+        self.0.get(&tag).cloned()
+    }
+
+    /// Iterates over all [`Tag`]/name pairs saved in this cache.
+    pub fn visit(&self, mut f: impl FnMut((Tag, Cow<'static, str>))) {
+        for (tag, name) in self.0.iter() {
+            f((*tag, name.clone()));
+        }
+    }
+}
 
 /// A collection of tags.
 ///
