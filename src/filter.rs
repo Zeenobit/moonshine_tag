@@ -58,11 +58,61 @@ pub enum TagFilter {
 pub type Filter = TagFilter;
 
 impl TagFilter {
+    /// Returns a static [`TagFilter::any`].
+    ///
+    /// # Usage
+    ///
+    /// This is convenient for cases when the absence of a [`TagFilter`] implies "any", for example:
+    ///
+    /// ```
+    /// use bevy::prelude::*;
+    /// use moonshine_tag::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct SomeFilter(TagFilter);
+    ///
+    /// let mut world = World::new();
+    ///
+    /// // Spawn an entity with no filter:
+    /// let entity = world.spawn_empty().id();
+    ///
+    /// let filter: &TagFilter = world
+    ///     .get(entity)
+    ///     .map(|SomeFilter(filter)| filter)
+    ///     .unwrap_or(TagFilter::static_any());
+    ///
+    /// assert_eq!(filter, &TagFilter::any());
+    /// ```
     pub fn static_any() -> &'static TagFilter {
         static ANY: Lazy<TagFilter> = Lazy::new(TagFilter::any);
         &ANY
     }
 
+    /// Returns a static [`TagFilter::none`].
+    ///
+    /// # Usage
+    ///
+    /// This is convenient for cases when the absence of a [`TagFilter`] implies "none", for example:
+    ///
+    /// ```
+    /// use bevy::prelude::*;
+    /// use moonshine_tag::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct SomeFilter(TagFilter);
+    ///
+    /// let mut world = World::new();
+    ///
+    /// // Spawn an entity with no filter:
+    /// let entity = world.spawn_empty().id();
+    ///
+    /// let filter: &TagFilter = world
+    ///     .get(entity)
+    ///     .map(|SomeFilter(filter)| filter)
+    ///     .unwrap_or(TagFilter::static_none());
+    ///
+    /// assert_eq!(filter, &TagFilter::none());
+    /// ```
     pub fn static_none() -> &'static TagFilter {
         static NONE: Lazy<TagFilter> = Lazy::new(TagFilter::none);
         &NONE

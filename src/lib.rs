@@ -254,7 +254,7 @@ inventory::collect!(TagMeta);
 pub struct Tags(HashSet<Tag>);
 
 impl Tags {
-    /// A static empty set of tags.
+    /// A static empty set of [`Tags`].
     ///
     /// # Usage
     ///
@@ -279,6 +279,7 @@ impl Tags {
         &EMPTY
     }
 
+    #[doc(hidden)]
     #[deprecated(since = "0.3.0", note = "use `static_empty` instead")]
     pub fn empty() -> &'static Tags {
         Self::static_empty()
