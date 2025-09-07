@@ -279,10 +279,8 @@ impl TagNames {
     }
 
     /// Iterates over all [`Tag`]/name pairs saved in this cache.
-    pub fn visit(&self, mut f: impl FnMut((Tag, Cow<'static, str>))) {
-        for (tag, name) in self.0.iter() {
-            f((*tag, name.clone()));
-        }
+    pub fn iter(&self) -> impl Iterator<Item = (&Tag, &Cow<'static, str>)> {
+        self.0.iter()
     }
 }
 
