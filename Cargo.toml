@@ -25,3 +25,4 @@ bevy_utils = "0.16.*"
 
 [dev-dependencies]
 bevy = "0.16.*"
+moonshine-util = "0.3"

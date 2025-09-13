@@ -15,6 +15,7 @@ use std::borrow::Cow;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
+use std::ops::AddAssign;
 
 use bevy_app::{App, Plugin};
 use bevy_ecs::component::HookContext;
@@ -480,6 +481,12 @@ impl<const N: usize> PartialEq<Tags> for [Tag; N] {
     }
 }
 
+impl AddAssign for Tags {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0.extend(rhs.into_iter());
+    }
+}
+
 impl IntoIterator for Tags {
     type Item = Tag;
     type IntoIter = bevy_platform::collections::hash_set::IntoIter<Self::Item>;
@@ -504,17 +511,18 @@ impl IntoIterator for Tags {
 /// ```
 /// use bevy::prelude::*;
 /// use moonshine_tag::prelude::*;
+/// use moonshine_util::prelude::*;
 ///
 /// tags! { A, B, C };
 ///
 /// let mut world = World::new();
-/// let entity = world.spawn((WithTags(|| [A, B]), WithTags(|| [B, C]))).id();
-/// world.flush();
-/// assert_eq!(world.get::<Tags>(entity).unwrap(), [A, B, C]);
+/// let entity = world.spawn((Add::<Tags>::with(|| [A, B]), Add::<Tags>::with(|| [B, C])));
+/// assert_eq!(entity.get::<Tags>().unwrap(), [A, B, C]);
 /// ```
 #[derive(Component)]
 #[component(storage = "SparseSet")]
 #[component(on_add = Self::on_add)]
+#[deprecated(since = "0.3.0", note = "use `AddWith` from `moonshine-util` instead")]
 pub struct WithTags<I: IntoIterator<Item = Tag>, F: FnOnce() -> I>(pub F)
 where
     F: 'static + Send + Sync,
@@ -550,27 +558,28 @@ where
 ///
 /// # Examples
 /// ```
-/// # use bevy::prelude::*;
-/// # use moonshine_tag::prelude::*;
+/// use bevy::prelude::*;
+/// use moonshine_tag::prelude::*;
+/// use moonshine_util::prelude::*;
 ///
 /// tags! { A, B, C };
 ///
 /// #[derive(Component)]
-/// #[require(ComponentTags<Self> = A)]
+/// #[require(AddFrom<Self, Tags> = Tags::from(A))]
 /// struct Foo;
 ///
 /// #[derive(Component)]
-/// #[require(ComponentTags<Self> = [B, C])]
+/// #[require(AddFrom<Self, Tags> = Tags::from([B, C]))]
 /// struct Bar;
 ///
 /// let mut world = World::new();
-/// let entity = world.spawn((Foo, Bar)).id();
-/// world.flush();
-/// assert_eq!(world.get::<Tags>(entity).unwrap(), [A, B, C]);
+/// let entity = world.spawn((Foo, Bar));
+/// assert_eq!(entity.get::<Tags>().unwrap(), [A, B, C]);
 /// ```
 #[derive(Component)]
 #[component(storage = "SparseSet")]
 #[component(on_add = Self::on_add)]
+#[deprecated(since = "0.3.0", note = "use `AddFrom` from `moonshine-util` instead")]
 pub struct ComponentTags<T: Component>(Tags, PhantomData<T>);
 
 impl<T: Component> ComponentTags<T> {
