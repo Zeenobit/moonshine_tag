@@ -1,10 +1,13 @@
+#![allow(deprecated)] // TODO: Remove
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
 
 pub mod prelude {
     //! Prelude module to import the most essential types and traits.
 
-    pub use crate::{tag_filter, tags, ComponentTags, Tag, TagFilter, TagPlugin, Tags, WithTags};
+    pub use crate::{tag_filter, tags, Tag, TagFilter, TagPlugin, Tags};
+
+    pub use crate::{ComponentTags, WithTags};
 }
 
 mod filter;
