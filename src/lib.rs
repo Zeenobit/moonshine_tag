@@ -94,7 +94,8 @@ macro_rules! tags {
 /// assert_eq!(A, A);
 /// assert_ne!(A, B);
 /// ```
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Reflect)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Reflect)]
+#[cfg_attr(not(feature = "pretty-serde"), derive(Serialize, Deserialize))]
 #[reflect(Hash, PartialEq)]
 pub struct Tag(u64);
 
@@ -211,6 +212,64 @@ impl IntoIterator for Tag {
     }
 }
 
+#[cfg(feature = "pretty-serde")]
+impl Serialize for Tag {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        static NAMES: Lazy<TagNames> = Lazy::new(|| TagNames::generate());
+        if let Some(name) = NAMES.get_cached(*self) {
+            serializer.serialize_str(&name)
+        } else {
+            serializer.serialize_u64(self.0)
+        }
+    }
+}
+
+#[cfg(feature = "pretty-serde")]
+impl<'de> Deserialize<'de> for Tag {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(TagVisitor)
+    }
+}
+
+#[cfg(feature = "pretty-serde")]
+struct TagVisitor;
+
+#[cfg(feature = "pretty-serde")]
+impl<'de> serde::de::Visitor<'de> for TagVisitor {
+    type Value = Tag;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "string or numeric hash")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Tag::new(v))
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Tag::new(&v))
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Tag::from_hash(v))
+    }
+}
+
 /// The metadata associated with a [`Tag`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Reflect)]
 pub struct TagMeta {
@@ -314,7 +373,8 @@ impl TagNames {
 /// let entity = world.spawn(Tags::from([A, B])).id();
 /// assert_eq!(world.get::<Tags>(entity).unwrap(), [A, B]);
 /// ```
-#[derive(Component, Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Reflect)]
+#[derive(Component, Default, Debug, Clone, PartialEq, Eq, Reflect)]
+#[cfg_attr(not(feature = "pretty-serde"), derive(Serialize, Deserialize))]
 #[reflect(Component)]
 pub struct Tags(HashSet<Tag>);
 
@@ -496,6 +556,75 @@ impl IntoIterator for Tags {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+#[cfg(feature = "pretty-serde")]
+impl Serialize for Tags {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeSeq;
+        let mut seq = serializer.serialize_seq(Some(self.len()))?;
+        for tag in self.iter() {
+            seq.serialize_element(&tag)?;
+        }
+        seq.end()
+    }
+}
+
+#[cfg(feature = "pretty-serde")]
+impl<'de> Deserialize<'de> for Tags {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(TagsVisitor)
+    }
+}
+
+#[cfg(feature = "pretty-serde")]
+struct TagsVisitor;
+
+#[cfg(feature = "pretty-serde")]
+impl<'de> serde::de::Visitor<'de> for TagsVisitor {
+    type Value = Tags;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "string or numeric hash")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Tag::new(v).into())
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Tag::new(&v).into())
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Tag::from_hash(v).into())
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::SeqAccess<'de>,
+    {
+        let mut tags = Tags::new();
+        while let Ok(Some(tag)) = seq.next_element::<Tag>() {
+            tags.insert(tag);
+        }
+        Ok(tags)
     }
 }
 
@@ -754,5 +883,18 @@ mod tests {
             pub n09,
             n10,
         }
+    }
+
+    #[cfg(feature = "pretty-serde")]
+    #[test]
+    fn test_pretty_serde() {
+        let ux = tag_filter![A, B, ..];
+        let sx = "AllOf([\"A\",\"B\"])";
+
+        let s = ron::to_string(&ux).unwrap();
+        assert_eq!(s, sx);
+
+        let u: TagFilter = ron::from_str(&s).unwrap();
+        assert_eq!(u, ux);
     }
 }

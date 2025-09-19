@@ -38,6 +38,7 @@ use crate::Tags;
 /// assert!(!filter.allows(&cb));
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Reflect)]
+//#[cfg_attr(not(feature = "pretty-serde"), derive(Serialize, Deserialize))]
 pub enum TagFilter {
     /// Matches any set of tags which is exactly equal to the filter tags.
     Equal(Tags),
@@ -52,10 +53,6 @@ pub enum TagFilter {
     /// Matches any set of tags which does not match the inner filter.
     Not(TagFilterDyn),
 }
-
-#[doc(hidden)]
-#[deprecated(since = "0.2.0", note = "use `TagFilter` instead")]
-pub type Filter = TagFilter;
 
 impl TagFilter {
     /// Returns a static [`TagFilter::any`].
@@ -217,6 +214,53 @@ impl Not for TagFilter {
         Self::Not(Box::new(self))
     }
 }
+
+// #[cfg(feature = "pretty-serde")]
+// impl Serialize for TagFilter {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::Serializer,
+//     {
+//         match self {
+//             TagFilter::Equal(tags) => {
+//                 serializer.serialize_newtype_variant("TagFilter", 0, "Equal", tags)
+//             }
+//             TagFilter::AllOf(tags) => {
+//                 serializer.serialize_newtype_variant("TagFilter", 1, "AllOf", tags)
+//             }
+//             TagFilter::AnyOf(tags) => {
+//                 serializer.serialize_newtype_variant("TagFilter", 2, "AnyOf", tags)
+//             }
+//             TagFilter::And(a, b) => {
+//                 use serde::ser::SerializeTupleVariant;
+//                 let mut tuple = serializer.serialize_tuple_variant("TagFilter", 3, "And", 2)?;
+//                 tuple.serialize_field(a)?;
+//                 tuple.serialize_field(b)?;
+//                 tuple.end()
+//             }
+//             TagFilter::Or(a, b) => {
+//                 use serde::ser::SerializeTupleVariant;
+//                 let mut tuple = serializer.serialize_tuple_variant("TagFilter", 4, "Or", 2)?;
+//                 tuple.serialize_field(a)?;
+//                 tuple.serialize_field(b)?;
+//                 tuple.end()
+//             }
+//             TagFilter::Not(inner) => {
+//                 serializer.serialize_newtype_variant("TagFilter", 5, "Not", inner)
+//             }
+//         }
+//     }
+// }
+
+// #[cfg(feature = "pretty-serde")]
+// impl<'de> Deserialize<'de> for TagFilter {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: serde::Deserializer<'de>,
+//     {
+//         todo!()
+//     }
+// }
 
 type TagFilterDyn = Box<TagFilter>;
 
