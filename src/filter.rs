@@ -215,53 +215,6 @@ impl Not for TagFilter {
     }
 }
 
-// #[cfg(feature = "pretty-serde")]
-// impl Serialize for TagFilter {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: serde::Serializer,
-//     {
-//         match self {
-//             TagFilter::Equal(tags) => {
-//                 serializer.serialize_newtype_variant("TagFilter", 0, "Equal", tags)
-//             }
-//             TagFilter::AllOf(tags) => {
-//                 serializer.serialize_newtype_variant("TagFilter", 1, "AllOf", tags)
-//             }
-//             TagFilter::AnyOf(tags) => {
-//                 serializer.serialize_newtype_variant("TagFilter", 2, "AnyOf", tags)
-//             }
-//             TagFilter::And(a, b) => {
-//                 use serde::ser::SerializeTupleVariant;
-//                 let mut tuple = serializer.serialize_tuple_variant("TagFilter", 3, "And", 2)?;
-//                 tuple.serialize_field(a)?;
-//                 tuple.serialize_field(b)?;
-//                 tuple.end()
-//             }
-//             TagFilter::Or(a, b) => {
-//                 use serde::ser::SerializeTupleVariant;
-//                 let mut tuple = serializer.serialize_tuple_variant("TagFilter", 4, "Or", 2)?;
-//                 tuple.serialize_field(a)?;
-//                 tuple.serialize_field(b)?;
-//                 tuple.end()
-//             }
-//             TagFilter::Not(inner) => {
-//                 serializer.serialize_newtype_variant("TagFilter", 5, "Not", inner)
-//             }
-//         }
-//     }
-// }
-
-// #[cfg(feature = "pretty-serde")]
-// impl<'de> Deserialize<'de> for TagFilter {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: serde::Deserializer<'de>,
-//     {
-//         todo!()
-//     }
-// }
-
 type TagFilterDyn = Box<TagFilter>;
 
 impl PartialReflect for Box<TagFilter> {
