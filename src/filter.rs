@@ -38,7 +38,6 @@ use crate::Tags;
 /// assert!(!filter.allows(&cb));
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Reflect)]
-//#[cfg_attr(not(feature = "pretty-serde"), derive(Serialize, Deserialize))]
 pub enum TagFilter {
     /// Matches any set of tags which is exactly equal to the filter tags.
     Equal(Tags),
