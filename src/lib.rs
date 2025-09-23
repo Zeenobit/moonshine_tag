@@ -218,8 +218,7 @@ impl Serialize for Tag {
     where
         S: serde::Serializer,
     {
-        static NAMES: Lazy<TagNames> = Lazy::new(|| TagNames::generate());
-        if let Some(name) = NAMES.get_cached(*self) {
+        if let Some(name) = TagNames::global().get_cached(*self) {
             serializer.serialize_str(&name)
         } else {
             serializer.serialize_u64(self.0)
@@ -326,6 +325,15 @@ impl TagNames {
         }
 
         Self(inner)
+    }
+
+    /// Returns a global instance of [`TagNames`].
+    ///
+    /// This global instance is lazily initialized and internally calls [`generate`](TagNames::generate)
+    /// on first execution which can be expensive depending on the number of registered tags.
+    pub fn global() -> &'static Self {
+        static GLOBAL: Lazy<TagNames> = Lazy::new(|| TagNames::generate());
+        &GLOBAL
     }
 
     /// Returns the name of the given [`Tag`] and stores a copy of it to speed up future calls.
