@@ -119,6 +119,11 @@ impl TagFilter {
         Self::Equal(Tags::default())
     }
 
+    /// Returns `true` if this filter is equivalent to [`TagFilter::none`].
+    pub fn matches_none(&self) -> bool {
+        matches!(self, Self::Equal(tags) if tags.is_empty())
+    }
+
     /// Creates a new filter which matches only an exact set of tags.
     pub fn equal(tags: impl Into<Tags>) -> TagFilter {
         Self::Equal(tags.into())
@@ -127,6 +132,11 @@ impl TagFilter {
     /// Creates a new filter which matches any set of tags.
     pub fn any() -> TagFilter {
         Self::AllOf(Tags::default())
+    }
+
+    /// Returns `true` if this filter is equivalent to [`TagFilter::any`].
+    pub fn matches_any(&self) -> bool {
+        matches!(self, Self::AllOf(tags) if tags.is_empty())
     }
 
     /// Creates a new filter which matches any set of tags which contains all of the given tags.
