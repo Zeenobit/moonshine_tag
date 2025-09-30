@@ -332,7 +332,7 @@ impl TagNames {
     /// This global instance is lazily initialized and internally calls [`generate`](TagNames::generate)
     /// on first execution which can be expensive depending on the number of registered tags.
     pub fn global() -> &'static Self {
-        static GLOBAL: Lazy<TagNames> = Lazy::new(|| TagNames::generate());
+        static GLOBAL: Lazy<TagNames> = Lazy::new(TagNames::generate);
         &GLOBAL
     }
 
@@ -554,7 +554,7 @@ impl<const N: usize> PartialEq<Tags> for [Tag; N] {
 
 impl AddAssign for Tags {
     fn add_assign(&mut self, rhs: Self) {
-        self.0.extend(rhs.into_iter());
+        self.0.extend(rhs);
     }
 }
 
@@ -678,7 +678,7 @@ where
         world.commands().queue(move |world: &mut World| {
             let mut entity = world.entity_mut(entity);
             let this = entity.take::<Self>().unwrap();
-            let new_tags = Tags::from_iter(this.0().into_iter());
+            let new_tags = Tags::from_iter(this.0());
             if let Some(mut tags) = entity.get_mut::<Tags>() {
                 tags.extend(new_tags);
             } else {
