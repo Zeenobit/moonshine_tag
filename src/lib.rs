@@ -657,7 +657,10 @@ impl<'de> serde::de::Visitor<'de> for TagsVisitor {
 /// tags! { A, B, C };
 ///
 /// let mut world = World::new();
-/// let entity = world.spawn((Add::<Tags>::with(|| [A, B]), Add::<Tags>::with(|| [B, C])));
+/// let entity = world.spawn((
+///     Merge::<Tags>::with(|| [A, B].into()),
+///     Merge::<Tags>::with(|| [B, C].into()),
+/// ));
 /// assert_eq!(entity.get::<Tags>().unwrap(), [A, B, C]);
 /// ```
 #[derive(Component)]
@@ -706,11 +709,11 @@ where
 /// tags! { A, B, C };
 ///
 /// #[derive(Component)]
-/// #[require(AddFrom<Self, Tags> = Tags::from(A))]
+/// #[require(MergeFrom<Self, Tags> = Tags::from(A))]
 /// struct Foo;
 ///
 /// #[derive(Component)]
-/// #[require(AddFrom<Self, Tags> = Tags::from([B, C]))]
+/// #[require(MergeFrom<Self, Tags> = Tags::from([B, C]))]
 /// struct Bar;
 ///
 /// let mut world = World::new();
