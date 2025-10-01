@@ -161,22 +161,6 @@ However, you should **NOT** use tags for any cryptographic purposes, or as globa
 
 Instead, prefer to use them for convenient, dynamic pattern matching or flagging "things" within your systems, especially entities.
 
-## Changes
-
-### Version 0.3
-
-- Renamed `Filter` back to `TagFilter`
-    - `tag::Filter` and `tag::filter!` was a cute idea, but when `moonshine_tag` is used on its own, it would force the user to either import `moonshine_tag as tag` or use `moonshine_tag::Filter`. Both are ugly.
-- Flipped the `allows` functions into `matches` functions
-    - Better symmetry with the rest of Rust API
-    - Enables an optimization when checking against single tags
-- Added methods for human-friendly tag identification:
-    - [`pretty_hash`]
-    - [`resolve_name`]
-    - [`to_pretty_string`] for `Tags` and `TagFilter`
-- Support for mixed expressions in `tag_filter!`
-    - See tests for examples
-
 
 ## Support
 
