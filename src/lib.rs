@@ -18,10 +18,9 @@ use std::borrow::Cow;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::ops::AddAssign;
 
 use bevy_app::{App, Plugin};
-use bevy_ecs::component::HookContext;
+use bevy_ecs::lifecycle::HookContext;
 use bevy_ecs::prelude::*;
 use bevy_ecs::world::DeferredWorld;
 use bevy_platform::collections::{HashMap, HashSet};
@@ -29,6 +28,8 @@ use bevy_reflect::prelude::*;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+
+use moonshine_util::prelude::*;
 
 pub use self::filter::*;
 
@@ -552,9 +553,9 @@ impl<const N: usize> PartialEq<Tags> for [Tag; N] {
     }
 }
 
-impl AddAssign for Tags {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0.extend(rhs);
+impl MergeComponent for Tags {
+    fn merge(&mut self, other: Self) {
+        self.0.extend(other);
     }
 }
 

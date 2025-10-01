@@ -11,22 +11,22 @@ homepage = "https://github.com/Zeenobit/moonshine_tag"
 repository = "https://github.com/Zeenobit/moonshine_tag"
 
 [dependencies]
-base31 = "0.1.*"
-inventory = "0.3.*"
-itertools = "0.14.*"
-once_cell = "1.20.*"
-serde = { version = "1.0.*", features = ["derive"] }
+base31 = "0.1"
+inventory = "0.3"
+itertools = "0.14"
+once_cell = "1.21"
+serde = { version = "1", features = ["derive"] }
 ron = { version = "0.11", optional = true }
-const-fnv1a-hash = "1.1.*"
-bevy_app = "0.16.*"
-bevy_ecs = "0.16.*"
-bevy_platform = "0.16.*"
-bevy_reflect = "0.16.*"
-bevy_utils = "0.16.*"
+const-fnv1a-hash = "1.1"
+bevy_app = "0.17"
+bevy_ecs = "0.17"
+bevy_platform = "0.17"
+bevy_reflect = "0.17"
+bevy_utils = "0.17"
+moonshine-util = "0.4"
 
 [dev-dependencies]
-bevy = "0.16.*"
-moonshine-util = "0.3"
+bevy = "0.17"
 
 [features]
 pretty-serde = ["ron"]
