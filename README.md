@@ -186,10 +186,10 @@ You may also contact me on the official [Bevy Discord](https://discord.gg/bevy) 
 
 
 [`Tag`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html
-[`resolve_name`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html#method.resoleve_name
+[`resolve_name`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html#method.resolve_name
 [`pretty_hash`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tag.html#method.pretty_hash
 [`tags!`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/macro.tags.html
 [`Tags`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tags.html
-[`TagFilter`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/filter/struct.TagFilter.html
-[`to_pretty_string`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tags.html#to_pretty_string
+[`TagFilter`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/enum.TagFilter.html
+[`to_pretty_string`]:https://docs.rs/moonshine-tag/latest/moonshine_tag/struct.Tags.html#method.to_pretty_string
 [`Component`]:https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html
