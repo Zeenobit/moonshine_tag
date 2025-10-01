@@ -53,7 +53,7 @@ for fruit in &fruits {
 
 ### Tags
 
-You may define [`Tags`] from any arbitrary string:
+You may create a [`Tag`] from any arbitrary string:
 
 ```rust
 use moonshine_tag::prelude::*;
@@ -87,7 +87,7 @@ let ac = a.union(c);
 
 ### Tag Filters
 
-A tag [`Filter`] is used to test if a given [`Tags`] set matches a certain pattern:
+A tag [`TagFilter`] is used to test if a given [`Tags`] set matches a certain pattern:
 
 ```rust
 use moonshine_tag::prelude::*;
