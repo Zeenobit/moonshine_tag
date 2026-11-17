@@ -5,12 +5,13 @@
 pub mod prelude {
     //! Prelude module to import the most essential types and traits.
 
-    pub use crate::{tag_filter, tags, Tag, TagFilter, TagPlugin, Tags};
+    pub use crate::{tag_filter, tags, Tag, TagFilter, TagPath, TagPlugin, Tags};
 
     pub use crate::{ComponentTags, WithTags};
 }
 
 mod filter;
+mod path;
 
 pub extern crate inventory;
 
@@ -32,6 +33,7 @@ use serde::{Deserialize, Serialize};
 use moonshine_util::prelude::*;
 
 pub use self::filter::*;
+pub use self::path::*;
 
 /// A [`Plugin`] required to register tag related types for reflection.
 pub struct TagPlugin;
@@ -99,6 +101,9 @@ macro_rules! tags {
 #[cfg_attr(not(feature = "pretty-serde"), derive(Serialize, Deserialize))]
 #[reflect(Hash, PartialEq)]
 pub struct Tag(u64);
+
+pub const ANY: Tag = Tag::new("*");
+pub const NONE: Tag = Tag::new("");
 
 impl Tag {
     /// Creates a new tag from a string key.
@@ -199,7 +204,7 @@ impl Hash for Tag {
 
 impl FromWorld for Tag {
     fn from_world(_: &mut World) -> Self {
-        Self(u64::MAX)
+        NONE
     }
 }
 
