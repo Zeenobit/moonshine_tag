@@ -1,10 +1,17 @@
 use bevy_reflect::Reflect;
+use itertools::Itertools;
 
 use crate::{Tag, ANY, NONE};
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Reflect)]
 #[reflect(Hash, PartialEq)]
-pub struct TagPath<const N: usize = 8>([Tag; N]);
+pub struct TagPath<const N: usize>([Tag; N]);
+
+impl<const N: usize> Default for TagPath<N> {
+    fn default() -> Self {
+        Self([NONE; N])
+    }
+}
 
 impl<const N: usize> TagPath<N> {
     pub fn from_str(path: &str) -> Self {
@@ -46,6 +53,10 @@ impl<const N: usize> TagPath<N> {
 
     pub fn matches_exact_str(&self, pattern: &str) -> bool {
         self.matches_exact(&TagPath::from_str(pattern))
+    }
+
+    pub fn pretty_name(&self) -> String {
+        self.0.iter().map(|tag| tag.pretty_name()).join(".")
     }
 }
 
