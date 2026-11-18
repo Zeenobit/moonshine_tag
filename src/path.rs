@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn foo() {
+    fn match_path() {
         let ____ = TagPath::<4>::from_str("*.*.*.*");
         let axxx = TagPath::<4>::from_str("A");
         let a___ = TagPath::<4>::from_str("A.*");
@@ -120,5 +120,77 @@ mod tests {
         assert!(!bacx.matches(&abcd));
         assert!(!bac_.matches(&abcd));
         assert!(!bacd.matches(&abcd));
+
+        assert!(____.matches_exact(&____));
+        assert!(!____.matches_exact(&axxx));
+        assert!(!____.matches_exact(&a___));
+        assert!(!____.matches_exact(&abxx));
+        assert!(!____.matches_exact(&ab__));
+        assert!(!____.matches_exact(&abcx));
+        assert!(!____.matches_exact(&abc_));
+        assert!(!____.matches_exact(&abcd));
+
+        assert!(!axxx.matches_exact(&____));
+        assert!(axxx.matches_exact(&axxx));
+        assert!(!axxx.matches_exact(&a___));
+        assert!(!axxx.matches_exact(&abxx));
+        assert!(!axxx.matches_exact(&ab__));
+        assert!(!axxx.matches_exact(&abcx));
+        assert!(!axxx.matches_exact(&abc_));
+        assert!(!axxx.matches_exact(&abcd));
+
+        assert!(!a___.matches_exact(&____));
+        assert!(!a___.matches_exact(&axxx));
+        assert!(a___.matches_exact(&a___));
+        assert!(!a___.matches_exact(&abxx));
+        assert!(!a___.matches_exact(&ab__));
+        assert!(!a___.matches_exact(&abcx));
+        assert!(!a___.matches_exact(&abc_));
+        assert!(!a___.matches_exact(&abcd));
+
+        assert!(!abxx.matches_exact(&____));
+        assert!(!abxx.matches_exact(&axxx));
+        assert!(abxx.matches_exact(&a___));
+        assert!(abxx.matches_exact(&abxx));
+        assert!(!abxx.matches_exact(&ab__));
+        assert!(!abxx.matches_exact(&abcx));
+        assert!(!abxx.matches_exact(&abc_));
+        assert!(!abxx.matches_exact(&abcd));
+
+        assert!(!ab__.matches_exact(&____));
+        assert!(!ab__.matches_exact(&axxx));
+        assert!(!ab__.matches_exact(&a___));
+        assert!(!ab__.matches_exact(&abxx));
+        assert!(ab__.matches_exact(&ab__));
+        assert!(!ab__.matches_exact(&abcx));
+        assert!(!ab__.matches_exact(&abc_));
+        assert!(!ab__.matches_exact(&abcd));
+
+        assert!(!abcx.matches_exact(&____));
+        assert!(!abcx.matches_exact(&axxx));
+        assert!(!abcx.matches_exact(&a___));
+        assert!(!abcx.matches_exact(&abxx));
+        assert!(abcx.matches_exact(&ab__));
+        assert!(abcx.matches_exact(&abcx));
+        assert!(!abcx.matches_exact(&abc_));
+        assert!(!abcx.matches_exact(&abcd));
+
+        assert!(abc_.matches_exact(&____));
+        assert!(!abc_.matches_exact(&axxx));
+        assert!(!abc_.matches_exact(&a___));
+        assert!(!abc_.matches_exact(&abxx));
+        assert!(!abc_.matches_exact(&ab__));
+        assert!(!abc_.matches_exact(&abcx));
+        assert!(abc_.matches_exact(&abc_));
+        assert!(!abc_.matches_exact(&abcd));
+
+        assert!(abcd.matches_exact(&____));
+        assert!(!abcd.matches_exact(&axxx));
+        assert!(!abcd.matches_exact(&a___));
+        assert!(!abcd.matches_exact(&abxx));
+        assert!(!abcd.matches_exact(&ab__));
+        assert!(!abcd.matches_exact(&abcx));
+        assert!(abcd.matches_exact(&abc_));
+        assert!(abcd.matches_exact(&abcd));
     }
 }
